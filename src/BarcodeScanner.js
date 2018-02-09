@@ -6,6 +6,7 @@ import {
   View,
   Vibration,
   Keyboard,
+  AsyncStorage,
   KeyboardAvoidingView
 } from "react-native";
 import {
@@ -32,28 +33,44 @@ const COMMON = [
   "Upload pictures",
   "Vehicle Info"
 ];
+
 const BUTTONSDRIVER = [...COMMON, "Cancel"];
 const BUTTONSSALES = [...COMMON, "Arbitration Update", "Cancel"];
 
 export default class BarcodeScanner extends Component {
   state = {
-    hasCameraPermission: null
+    hasCameraPermission: null,
+    shouldRender: true,
+    inputerror: false
   };
 
   async componentWillMount() {
+    this.setState({ shouldRender: true });
     Keyboard.dismiss();
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted" });
+    this.setState({ shouldRender: true });
   }
 
   constructor(props) {
     super(props);
 
     this.state = {
-      barcode: ""
+      barcode: "",
+      userType: "",
+      userName: "",
+      accessToken: ""
     };
+    setInterval(() => {
+      this.setState(previousState => {
+        return { blinking: !previousState.blinking };
+      });
+    }, 100);
   }
   componentDidMount() {
+    this._loadInitialState().done();
+
+    //this.setState({ shouldRender: true });
     navigator.geolocation.getCurrentPosition(
       position => {
         this.setState({
@@ -85,7 +102,29 @@ export default class BarcodeScanner extends Component {
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
   }
+  _loadInitialState = async () => {
+    try {
+      AsyncStorage.getItem("userType").then(value => {
+        const data = JSON.parse(value);
+        this.setState({ userType: data });
+      });
+      AsyncStorage.getItem("userName").then(value => {
+        const data = JSON.parse(value);
+        this.setState({ userName: data });
+      });
+      AsyncStorage.getItem("accessToken").then(value => {
+        const data = JSON.parse(value);
+        this.setState({ accessToken: data });
+      });
 
+      // var userNameValue = await JSON.parse(AsyncStorage.getItem("userName"));
+      // var userTypeValue = await JSON.parse(AsyncStorage.getItem("userType"));
+      // global.userType = userTypeValue;
+      // this.setState({ userType: userTypeValue });
+    } catch (error) {
+      console.error(error);
+    }
+  };
   static navigationOptions = {
     headerMode: "float",
 
@@ -113,103 +152,117 @@ export default class BarcodeScanner extends Component {
     //  console.log('message');
     //  alert(this.state.username);
     //    AsyncStorage.setItem("userName", JSON.stringify(this.state.username));
-    userType = this.state.barcode;
+    userType = this.state.userType;
     scannedValue = this.state.barcode;
-    //alert(this.state.barcode);
+    if (scannedValue.length < 3) {
+      this.setState({ inputerror: true });
+    } else {
+      this.state.shouldRender = false;
 
-    var globalParams = {
-      userType: this.state.barcode,
-      scannedValue: this.state.barcode,
-      latitude: this.state.latitude,
-      longitude: this.state.longitude,
-      address: this.state.address,
-      error: this.state.error
-    };
-    //action: NavigationActions.navigate({ routeName: "SubProfileRoute" })
+      //alert(this.state.barcode);
+      console.log(userType);
+      var globalParams = {
+        userType: this.state.userType,
+        userName: this.state.userName,
+        scannedValue: this.state.barcode,
+        latitude: this.state.latitude,
+        longitude: this.state.longitude,
+        address: this.state.address,
+        error: this.state.error,
+        accessToken: this.state.accessToken
+      };
+      //action: NavigationActions.navigate({ routeName: "SubProfileRoute" })
 
-    switch (userType) {
-      case "1":
-        ActionSheet.show(
-          {
-            options: BUTTONSDRIVER,
-            cancelButtonIndex: 4,
-            title: scannedValue
-          },
-          buttonIndex => {
-            //  alert(buttonIndex);
-            this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
-            switch (buttonIndex) {
-              case 0:
-                this.props.navigation.navigate("LocationUpdate", {
-                  ...globalParams
-                });
-                break;
-              case 1:
-                this.props.navigation.navigate("IssueUpdate", {
-                  ...globalParams
-                });
-                break;
-              case 2:
-                this.props.navigation.navigate("PictureUpload", {
-                  ...globalParams
-                });
-                break;
-              case 3:
-                this.props.navigation.navigate("VehicleInfo", {
-                  ...globalParams
-                });
-                break;
-              default:
+      switch (this.state.userType) {
+        case "1":
+          ActionSheet.show(
+            {
+              options: BUTTONSDRIVER,
+              cancelButtonIndex: 4,
+              title: scannedValue
+            },
+            buttonIndex => {
+              //  alert(buttonIndex);
+              this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
+              switch (buttonIndex) {
+                case 0:
+                  this.props.navigation.navigate("LocationUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 1:
+                  this.props.navigation.navigate("IssueUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 2:
+                  this.props.navigation.navigate("PictureUpload", {
+                    ...globalParams
+                  });
+                  break;
+                case 3:
+                  this.props.navigation.navigate("VehicleInfo", {
+                    ...globalParams
+                  });
+                  break;
+                default:
+                  this.setState({ shouldRender: true });
+                  break;
+              }
             }
-          }
-        );
-        break;
-      case "2":
-        ActionSheet.show(
-          {
-            options: BUTTONSSALES,
-            cancelButtonIndex: 5,
-            title: scannedValue
-          },
-          buttonIndex => {
-            //  alert(buttonIndex);
-            this.setState({ clicked: BUTTONSSALES[buttonIndex] });
-            switch (buttonIndex) {
-              case 0:
-                this.props.navigation.navigate("LocationUpdate", {
-                  ...globalParams
-                });
-                break;
-              case 1:
-                this.props.navigation.navigate("IssueUpdate", {
-                  ...globalParams
-                });
-                break;
-              case 2:
-                this.props.navigation.navigate("PictureUpload", {
-                  ...globalParams
-                });
-                break;
-              case 3:
-                this.props.navigation.navigate("ArbitrationUpdate", {
-                  ...globalParams
-                });
-              case 4:
-                this.props.navigation.navigate("VehicleInfo", {
-                  ...globalParams
-                });
-                break;
-              default:
+          );
+          break;
+        case "2":
+          ActionSheet.show(
+            {
+              options: BUTTONSSALES,
+              cancelButtonIndex: 5,
+              title: scannedValue
+            },
+            buttonIndex => {
+              //  alert(buttonIndex);
+              this.setState({ clicked: BUTTONSSALES[buttonIndex] });
+              switch (buttonIndex) {
+                case 0:
+                  this.props.navigation.navigate("LocationUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 1:
+                  this.props.navigation.navigate("IssueUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 2:
+                  this.props.navigation.navigate("PictureUpload", {
+                    ...globalParams
+                  });
+                  break;
+                case 3:
+                  this.props.navigation.navigate("ArbitrationUpdate", {
+                    ...globalParams
+                  });
+                case 4:
+                  this.props.navigation.navigate("VehicleInfo", {
+                    ...globalParams
+                  });
+                  break;
+                default:
+                  this.setState({ shouldRender: true });
+                  break;
+              }
             }
-          }
-        );
-        break;
-      case "3":
-        this.props.navigation.navigate("ConversionsMain", {
-          scannedValue: scannedValue
-        });
-        break;
-      default:
+          );
+          break;
+        case "3":
+          this.props.navigation.navigate("ConversionsMain", {
+            scannedValue: scannedValue
+          });
+          break;
+        default:
+          this.setState({ shouldRender: true });
+          break;
+      }
     }
   };
   _handleBarCodeRead = ({ type, data }) => {
@@ -217,71 +270,80 @@ export default class BarcodeScanner extends Component {
     this.setState({ barcode: data });
   };
   render() {
-    const { hasCameraPermission } = this.state;
-
-    if (hasCameraPermission === null) {
-      return <Text>Requesting for camera permission</Text>;
-    } else if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
+    const { shouldRender } = this.state;
+    if (shouldRender === false) {
+      return <View />;
     } else {
-      return (
-        <View style={{ flex: 1, justifyContent: "center" }}>
-          <BarCodeScanner
-            onBarCodeRead={this._handleBarCodeRead}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={{
-              borderBottomColor: "red",
-              borderBottomWidth: 1,
-              marginLeft: 35,
-              marginRight: 35
-            }}
-          />
-          <KeyboardAvoidingView
-            behavior="padding"
-            style={{
-              flex: 1,
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0
-            }}
-          >
-            <View
+      const { hasCameraPermission } = this.state;
+
+      if (hasCameraPermission === null) {
+        return <Text>Requesting for camera permission</Text>;
+      } else if (hasCameraPermission === false) {
+        return <Text>No access to camera</Text>;
+      } else {
+        return (
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <BarCodeScanner
+              onBarCodeRead={this._handleBarCodeRead}
+              style={StyleSheet.absoluteFill}
+            />
+            {this.state.blinking ? (
+              <View
+                style={{
+                  borderBottomColor: "red",
+                  borderBottomWidth: 1,
+                  marginLeft: 35,
+                  marginRight: 35
+                }}
+              />
+            ) : null}
+
+            <KeyboardAvoidingView
+              behavior="padding"
               style={{
-                flex: 1
+                flex: 1,
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0
               }}
             >
-              <Item
+              <View
                 style={{
                   flex: 1
                 }}
               >
-                <Input
+                <Item
+                  error={this.state.inputerror}
                   style={{
-                    flex: 1,
-                    color: "white",
-                    textAlign: "center",
-                    backgroundColor: "rgba(0,0,0,0.3)",
-                    fontSize: 30
+                    flex: 1
                   }}
-                  //  value = {this.state.name}
-                  //  editable = {true}
-                  //  placeholder = '{this.state.name}',
-                  placeholder="VIN"
-                  onChangeText={barcode => this.setState({ barcode })}
-                  value={this.state.barcode}
-                />
-              </Item>
+                >
+                  <Input
+                    style={{
+                      flex: 1,
+                      color: "white",
+                      textAlign: "center",
+                      backgroundColor: "rgba(0,0,0,0.3)",
+                      fontSize: 30
+                    }}
+                    //  value = {this.state.name}
+                    //  editable = {true}
+                    //  placeholder = '{this.state.name}',
+                    placeholder="VIN"
+                    onChangeText={barcode => this.setState({ barcode })}
+                    value={this.state.barcode}
+                  />
+                </Item>
 
-              <Button full onPress={this.buttonClick}>
-                <Text>Start</Text>
-              </Button>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      );
+                <Button full onPress={this.buttonClick}>
+                  <Text>Start</Text>
+                </Button>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        );
+      }
     }
   }
 }

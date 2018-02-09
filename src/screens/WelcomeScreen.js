@@ -45,7 +45,9 @@ export default class WelcomeScreen extends Component<{}> {
         this.requestCameraPermission();
       }
     });
+    //this.signInWithGoogleAsync();
   }
+
   async requestLocationPermission() {
     console.log("You ask to use the gps");
 
@@ -112,6 +114,7 @@ export default class WelcomeScreen extends Component<{}> {
         //    this._appendMessage('Initialized with no selection on disk.');
       }
     } catch (error) {
+      console.error(error);
       //  alert('error', error);
       //this._appendMessage('AsyncStorage error: ' + error.message);
     }

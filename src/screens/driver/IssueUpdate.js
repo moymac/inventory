@@ -10,7 +10,7 @@ import {
   Button
 } from "native-base";
 import React, { Component } from "react";
-import { AppRegistry, Platform } from "react-native";
+import { AppRegistry, Platform, Alert } from "react-native";
 
 export default class IssueUpdate extends Component {
   state = {
@@ -24,7 +24,12 @@ export default class IssueUpdate extends Component {
   componentWillMount() {
     const { params } = this.props.navigation.state;
     vin = params.scannedValue;
+    this.state.vin = params.scannedValue;
+    this.state.userName = params.userName;
     this.state.location = params.address;
+    this.state.latitude = params.latitude;
+    this.state.longitude = params.longitude;
+    this.state.accessToken = params.accessToken;
   }
   buttonClick = () => {
     let issdes = this.state.issueDesc;
@@ -38,12 +43,49 @@ export default class IssueUpdate extends Component {
     } else {
       this.setState({ commerror: false });
 
-      alert("update to GS");
+      let data = [
+        this.state.vin,
+        this.state.userName,
+        this.state.latitude,
+        this.state.longitude,
+        this.state.location,
+        this.state.comment,
+        this.state.issueDesc,
+        "",
+        "",
+        new Date()
+      ];
+      appendToSheet(this.state.accessToken, "AllScans", data);
+      updateSheet(
+        this.state.accessToken,
+        "VehicleIssues",
+        this.state.vin,
+        data
+      );
+      Alert.alert(
+        "Issue updated",
+        vin,
+        [
+          {
+            text: "Scan other vehicle",
+            onPress: () => this.props.navigation.navigate("BarcodeScanner")
+          },
+          {
+            text: "Get vehicle data",
+            onPress: () =>
+              this.props.navigation.navigate("VehicleInfo", {
+                scannedValue: vin
+              })
+          }
+        ],
+        { cancelable: true }
+      );
     }
     ///UPDATE TO GOOGLE SHEETS
   };
   static navigationOptions = {
-    title: "Issue update"
+    title: "Issue update",
+    headerLeft: null
   };
   render() {
     // const { params } = this.props.navigation.state;

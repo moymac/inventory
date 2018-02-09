@@ -22,6 +22,7 @@ import PictureUpload from "./src/screens/driver/PictureUpload";
 import ArbitrationUpdate from "./src/screens/sales/ArbitrationUpdate";
 import ConversionsMain from "./src/screens/conversions/ConversionsMain";
 import VehicleInfo from "./src/screens/VehicleInfo";
+import GoogleLogin from "./src/screens/GoogleLogin";
 
 //
 //

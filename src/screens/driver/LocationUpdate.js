@@ -11,19 +11,47 @@ import {
   Text,
   Button
 } from "native-base";
+import { appendToSheet, updateSheet } from "../../Calls";
 export default class LocationUpdate extends Component {
   state = {
     comment: "",
     vin: "",
-    location: ""
+    location: "",
+    accessToken: ""
   };
   componentWillMount() {
     const { params } = this.props.navigation.state;
     vin = params.scannedValue;
+    this.state.vin = params.scannedValue;
+    this.state.userName = params.userName;
     this.state.location = params.address;
+    this.state.latitude = params.latitude;
+    this.state.longitude = params.longitude;
+    this.state.accessToken = params.accessToken;
   }
   buttonClick = () => {
-    let commnt = this.state.comment;
+    //VIN	User	latitude	longitude	Address	Arbitration	Reason	Faceplate	LastUpdate
+    let data = [
+      this.state.vin,
+      this.state.userName,
+      this.state.latitude,
+      this.state.longitude,
+      this.state.location,
+      this.state.comment,
+      "",
+      "",
+      "",
+      new Date()
+    ];
+    appendToSheet(this.state.accessToken, "AllScans", data);
+    //console.log(apptosht);
+    updateSheet(
+      this.state.accessToken,
+      "VehicleLocations",
+      this.state.vin,
+      data
+    );
+
     Alert.alert(
       "Location updated",
       vin,
@@ -44,7 +72,8 @@ export default class LocationUpdate extends Component {
     ); ///UPDATE TO GOOGLE SHEETS
   };
   static navigationOptions = {
-    title: "Location update"
+    title: "Location update",
+    headerLeft: null
   };
   render() {
     const { params } = this.props.navigation.state;
