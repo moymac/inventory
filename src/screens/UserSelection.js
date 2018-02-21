@@ -46,7 +46,8 @@ export default class UserSelection extends Component<{}> {
   state = {
     username: "",
     inputerror: false,
-    accessToken: ""
+    accessToken: "",
+    refreshToken: ""
   };
 
   async signInWithGoogleAsync() {
@@ -59,6 +60,9 @@ export default class UserSelection extends Component<{}> {
         scopes: [
           "profile",
           "email",
+          "https://www.googleapis.com/auth/drive.appdata",
+          "https://www.googleapis.com/auth/drive.metadata",
+          "https://www.googleapis.com/auth/drive.scripts",
           "https://www.googleapis.com/auth/drive.file",
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/spreadsheets"
@@ -67,12 +71,15 @@ export default class UserSelection extends Component<{}> {
       console.log("fetchresult", result);
       if (result.type === "success") {
         //AsyncStorage.setItem("accessToken", JSON.stringify(token));
-        console.log("signtoken", result.accessToken);
         token = result.accessToken;
+        refreshToken = result.refreshToken;
         googleUser = result.user.name;
+        googleUserMail = result.user.email;
         this.setState({
           accessToken: token,
-          username: googleUser
+          refreshToken: refreshToken,
+          username: googleUser,
+          usermail: googleUserMail
         });
 
         ///////SAVING WRONG TOKEN VALUE!!!
@@ -81,7 +88,10 @@ export default class UserSelection extends Component<{}> {
           "accessToken",
           JSON.stringify(this.state.accessToken)
         );
-
+        AsyncStorage.setItem(
+          "refreshToken",
+          JSON.stringify(this.state.refreshToken)
+        );
         return result.accessToken;
       } else {
         return { cancelled: true };
@@ -109,23 +119,25 @@ export default class UserSelection extends Component<{}> {
     //var token = signInWithGoogleAsync();
     //this.setState({ accessToken: token });
     let usnm = this.state.username;
+    let usrmail = this.state.usermail;
     if (usnm.length < 3) {
       this.setState({ inputerror: true });
     } else {
       let userType = await getUserType(usnm);
       console.log("usrtype", userType);
-      if (userType < 5 && userType > 0) {
+      if (userType < 50 && userType > 0) {
         AsyncStorage.setItem("userName", JSON.stringify(usnm));
         AsyncStorage.setItem("userType", JSON.stringify(userType));
         this.props.navigation.navigate("WelcomeScreen");
       } else {
         Alert.alert("Not found", "User not registered, wait for approval");
-        console.log("notfound", token);
-        var appendresult = await appendToSheet(
-          this.state.accessToken,
-          "Users",
-          [usnm, ""]
-        );
+        if (userType != 0) {
+          var appendresult = await appendToSheet(
+            this.state.accessToken,
+            "Users",
+            [usnm, "0", usrmail]
+          );
+        }
       }
       //this.props.navigation.navigate("WelcomeScreen");
     }

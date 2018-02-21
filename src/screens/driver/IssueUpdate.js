@@ -11,6 +11,7 @@ import {
 } from "native-base";
 import React, { Component } from "react";
 import { AppRegistry, Platform, Alert } from "react-native";
+import { appendToSheet, updateSheet } from "../../Calls";
 
 export default class IssueUpdate extends Component {
   state = {

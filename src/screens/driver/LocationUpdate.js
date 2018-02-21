@@ -29,6 +29,7 @@ export default class LocationUpdate extends Component {
     this.state.longitude = params.longitude;
     this.state.accessToken = params.accessToken;
   }
+
   buttonClick = () => {
     //VIN	User	latitude	longitude	Address	Arbitration	Reason	Faceplate	LastUpdate
     let data = [

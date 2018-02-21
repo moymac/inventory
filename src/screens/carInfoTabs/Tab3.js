@@ -1,43 +1,92 @@
 import React, { Component } from "react";
-import { AppRegistry, Platform, StyleSheet, Text, View } from "react-native";
+import { AppRegistry, Platform, StyleSheet, View } from "react-native";
+import { Container, Content, Text, Title, Badge } from "native-base";
 
-const instructions = Platform.select({
-  ios: "Press Cmd+R to reload,\n" + "Cmd+D or shake for dev menu",
-  android:
-    "Double tap R on your keyboard to reload,\n" +
-    "Shake or press menu button for dev menu"
-});
+convertToCurrency = value => {
+  return (
+    "$" +
+    parseFloat(value)
+      .toFixed(2)
+      .replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")
+  );
+};
 
 export default class Tab3 extends Component {
-  static navigationOptions = {
-    title: "HOME screen"
-  };
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to HOME Sreen!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
-      </View>
+      <Container>
+        <View style={styles.content}>
+          <View>
+            <View>
+              <Text>Purchase price</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.purchasePrice)}
+              </Text>
+            </View>
+            <View>
+              <Text>Purchase HST</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.purchaseHST)}
+              </Text>
+            </View>
+          </View>
+          <View>
+            <View>
+              <Text>Buyer Fee</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.buyerFee)}
+              </Text>
+            </View>
+            <View>
+              <Text>Other Fees</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.otherFees)}
+              </Text>
+            </View>
+            <View>
+              <Text>Fees HST</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.feesHST)}
+              </Text>
+            </View>
+          </View>
+          <View>
+            <View>
+              <Text>Taxable purchase price</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.taxablePurchase)}
+              </Text>
+            </View>
+            <View>
+              <Text>Total HST</Text>
+              <Text style={styles.text}>
+                {convertToCurrency(this.props.moneyInfo.totalHST)}
+              </Text>
+            </View>
+          </View>
+
+          <View>
+            <Text style={{ fontSize: 23, fontWeight: "bold" }}>TOTAL</Text>
+            <Text style={styles.text}>
+              {convertToCurrency(this.props.moneyInfo.grandTotal)}
+            </Text>
+          </View>
+        </View>
+      </Container>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
+    margin: 20,
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5FCFF"
+    flexDirection: "column",
+    justifyContent: "space-around"
   },
-  welcome: {
-    fontSize: 20,
-    textAlign: "center",
-    margin: 10
-  },
-  instructions: {
-    textAlign: "center",
-    color: "#333333",
+  text: {
+    textAlign: "right",
+    fontSize: 25,
     marginBottom: 5
   }
 });

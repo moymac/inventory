@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import {
   Image,
   StyleSheet,
@@ -6,26 +7,32 @@ import {
   TouchableOpacity,
   ScrollView
 } from "react-native";
-import { Footer, FooterTab, Button, Text, Icon } from "native-base";
-import { FileSystem, FaceDetector } from "expo";
+import {
+  Container,
+  Content,
+  Footer,
+  FooterTab,
+  Button,
+  Text,
+  Icon,
+  Spinner
+} from "native-base";
+import { FileSystem } from "expo";
 
 const pictureSize = 150;
 
-export default class GalleryScreen extends React.Component {
+export default class PhotoPreview extends React.Component {
   state = {
-    photos: []
+    photos: [],
+    uploadingPhoto: false
   };
-
-  componentDidMount() {
-    FileSystem.readDirectoryAsync(FileSystem.documentDirectory + "photos").then(
-      photos => {
-        this.setState({
-          photos
-        });
-      }
-    );
-  }
-
+  static propTypes = {
+    picture: PropTypes.string.isRequired
+  };
+  okButtonPress = () => {
+    this.setState({ uploadingPhoto: true });
+    this.props.onPressOk();
+  };
   getImageDimensions = ({ width, height }) => {
     if (width > height) {
       const scaledHeight = pictureSize * height / width;
@@ -55,56 +62,44 @@ export default class GalleryScreen extends React.Component {
   };
 
   render() {
+    const { picture } = this.props;
+    console.log("picturetopreview", picture);
     return (
-      <View style={styles.container}>
-        <ScrollView contentComponentStyle={{ flex: 1 }}>
-          <View style={styles.pictures}>
-            {this.state.photos.map(photoUri => (
-              <View style={styles.pictureWrapper} key={photoUri}>
-                <Image
-                  key={photoUri}
-                  style={styles.picture}
-                  source={{
-                    uri: `${FileSystem.documentDirectory}photos/${photoUri}`
-                  }}
-                />
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+      <Container>
+        <View style={styles.container}>
+          <Image
+            style={styles.picture}
+            source={{
+              uri: `${FileSystem.documentDirectory}photos/${picture}.jpg`
+            }}
+          />
+        </View>
         <Footer>
           <FooterTab>
-            <Button onPress={this.props.onPressFinish}>
-              <Icon name="barcode" />
-              <Text>Scan new vehicle</Text>
+            <Button onPress={this.props.onPressUndo}>
+              <Icon name="undo" />
             </Button>
-            <Button onPress={this.props.onPressMorePictures}>
-              <Icon name="add" />
-              <Text>More pictures</Text>
+            <Button onPress={() => this.okButtonPress()}>
+              {this.state.uploadingPhoto ? (
+                <Spinner color="blue" />
+              ) : (
+                <Icon name="arrow-forward" />
+              )}
             </Button>
           </FooterTab>
         </Footer>
-      </View>
+      </Container>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
-  },
-  pictures: {
     flex: 1,
-    flexWrap: "wrap",
-    flexDirection: "row"
+    alignItems: "stretch"
   },
   picture: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    left: 0,
-    top: 0,
-    resizeMode: "contain"
+    flex: 1
   },
   pictureWrapper: {
     width: pictureSize,

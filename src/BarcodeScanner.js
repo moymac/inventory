@@ -7,6 +7,7 @@ import {
   Vibration,
   Keyboard,
   AsyncStorage,
+  BackHandler,
   KeyboardAvoidingView
 } from "react-native";
 import {
@@ -27,6 +28,7 @@ import {
 import { BarCodeScanner, Permissions } from "expo";
 
 import { NavigationActions } from "react-navigation";
+import { refreshToken } from "./Calls";
 const COMMON = [
   "Update location",
   "Issue update",
@@ -45,7 +47,6 @@ export default class BarcodeScanner extends Component {
   };
 
   async componentWillMount() {
-    this.setState({ shouldRender: true });
     Keyboard.dismiss();
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted" });
@@ -59,7 +60,8 @@ export default class BarcodeScanner extends Component {
       barcode: "",
       userType: "",
       userName: "",
-      accessToken: ""
+      accessToken: "",
+      refreshToken: ""
     };
     setInterval(() => {
       this.setState(previousState => {
@@ -67,7 +69,14 @@ export default class BarcodeScanner extends Component {
       });
     }, 100);
   }
+  handleBackButton() {
+    return true;
+  }
   componentDidMount() {
+    this.setState({ shouldRender: true });
+
+    BackHandler.addEventListener("backPress", this.handleBackButton);
+
     this._loadInitialState().done();
 
     //this.setState({ shouldRender: true });
@@ -116,6 +125,10 @@ export default class BarcodeScanner extends Component {
         const data = JSON.parse(value);
         this.setState({ accessToken: data });
       });
+      AsyncStorage.getItem("refreshToken").then(value => {
+        const data = JSON.parse(value);
+        this.setState({ refreshToken: data });
+      });
 
       // var userNameValue = await JSON.parse(AsyncStorage.getItem("userName"));
       // var userTypeValue = await JSON.parse(AsyncStorage.getItem("userType"));
@@ -147,8 +160,15 @@ export default class BarcodeScanner extends Component {
     },
     headerLeft: null
   };
+  buttonAdmin = async () => {
+    //    this.setState({ shouldRender: false });
 
-  buttonClick = () => {
+    this.props.navigation.navigate("UserAdministration", {
+      accessToken: await refreshToken(this.state.refreshToken)
+    });
+  };
+
+  buttonClick = async () => {
     //  console.log('message');
     //  alert(this.state.username);
     //    AsyncStorage.setItem("userName", JSON.stringify(this.state.username));
@@ -157,11 +177,12 @@ export default class BarcodeScanner extends Component {
     if (scannedValue.length < 3) {
       this.setState({ inputerror: true });
     } else {
-      this.state.shouldRender = false;
+      this.setState({ shouldRender: false });
+      let newAccessToken = await refreshToken(this.state.refreshToken);
 
       //alert(this.state.barcode);
-      console.log(userType);
-      var globalParams = {
+      //  console.log(userType);
+      var globalParams = await {
         userType: this.state.userType,
         userName: this.state.userName,
         scannedValue: this.state.barcode,
@@ -169,11 +190,36 @@ export default class BarcodeScanner extends Component {
         longitude: this.state.longitude,
         address: this.state.address,
         error: this.state.error,
-        accessToken: this.state.accessToken
+        accessToken: newAccessToken,
+        refreshToken: this.state.refreshToken
       };
       //action: NavigationActions.navigate({ routeName: "SubProfileRoute" })
 
       switch (this.state.userType) {
+        case "5":
+          ActionSheet.show(
+            {
+              options: ["Upload pictures", "Cancel"],
+              cancelButtonIndex: 1,
+              title: scannedValue
+            },
+            buttonIndex => {
+              //  alert(buttonIndex);
+              //    this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
+              switch (buttonIndex) {
+                case 0:
+                  this.props.navigation.navigate("PictureUpload", {
+                    ...globalParams
+                  });
+                  break;
+
+                default:
+                  this.setState({ shouldRender: true });
+                  break;
+              }
+            }
+          );
+          break;
         case "1":
           ActionSheet.show(
             {
@@ -183,7 +229,7 @@ export default class BarcodeScanner extends Component {
             },
             buttonIndex => {
               //  alert(buttonIndex);
-              this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
+              //      this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
               switch (buttonIndex) {
                 case 0:
                   this.props.navigation.navigate("LocationUpdate", {
@@ -221,7 +267,7 @@ export default class BarcodeScanner extends Component {
             },
             buttonIndex => {
               //  alert(buttonIndex);
-              this.setState({ clicked: BUTTONSSALES[buttonIndex] });
+              //      this.setState({ clicked: BUTTONSSALES[buttonIndex] });
               switch (buttonIndex) {
                 case 0:
                   this.props.navigation.navigate("LocationUpdate", {
@@ -239,11 +285,12 @@ export default class BarcodeScanner extends Component {
                   });
                   break;
                 case 3:
-                  this.props.navigation.navigate("ArbitrationUpdate", {
+                  this.props.navigation.navigate("VehicleInfo", {
                     ...globalParams
                   });
+                  break;
                 case 4:
-                  this.props.navigation.navigate("VehicleInfo", {
+                  this.props.navigation.navigate("ArbitrationUpdate", {
                     ...globalParams
                   });
                   break;
@@ -258,6 +305,49 @@ export default class BarcodeScanner extends Component {
           this.props.navigation.navigate("ConversionsMain", {
             scannedValue: scannedValue
           });
+          break;
+        case "4":
+          ActionSheet.show(
+            {
+              options: BUTTONSSALES,
+              cancelButtonIndex: 5,
+              title: scannedValue
+            },
+            buttonIndex => {
+              //  alert(buttonIndex);
+              //      this.setState({ clicked: BUTTONSSALES[buttonIndex] });
+              switch (buttonIndex) {
+                case 0:
+                  this.props.navigation.navigate("LocationUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 1:
+                  this.props.navigation.navigate("IssueUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                case 2:
+                  this.props.navigation.navigate("PictureUpload", {
+                    ...globalParams
+                  });
+                  break;
+                case 3:
+                  this.props.navigation.navigate("VehicleInfo", {
+                    ...globalParams
+                  });
+                  break;
+                case 4:
+                  this.props.navigation.navigate("ArbitrationUpdate", {
+                    ...globalParams
+                  });
+                  break;
+                default:
+                  this.setState({ shouldRender: true });
+                  break;
+              }
+            }
+          );
           break;
         default:
           this.setState({ shouldRender: true });
@@ -339,6 +429,11 @@ export default class BarcodeScanner extends Component {
                 <Button full onPress={this.buttonClick}>
                   <Text>Start</Text>
                 </Button>
+                {this.state.userType == "4" ? (
+                  <Button full dark onPress={this.buttonAdmin}>
+                    <Text>User administration</Text>
+                  </Button>
+                ) : null}
               </View>
             </KeyboardAvoidingView>
           </View>

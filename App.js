@@ -23,6 +23,7 @@ import ArbitrationUpdate from "./src/screens/sales/ArbitrationUpdate";
 import ConversionsMain from "./src/screens/conversions/ConversionsMain";
 import VehicleInfo from "./src/screens/VehicleInfo";
 import GoogleLogin from "./src/screens/GoogleLogin";
+import UserAdministration from "./src/screens/UserAdministration";
 
 //
 //
@@ -43,7 +44,8 @@ const AppInventory = StackNavigator({
   PictureUpload: { screen: PictureUpload },
   ArbitrationUpdate: { screen: ArbitrationUpdate },
   ConversionsMain: { screen: ConversionsMain },
-  VehicleInfo: { screen: VehicleInfo }
+  VehicleInfo: { screen: VehicleInfo },
+  UserAdministration: { screen: UserAdministration }
 });
 
 //export default AppInventory;

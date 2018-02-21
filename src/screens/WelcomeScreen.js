@@ -10,7 +10,8 @@ import {
   AppRegistry,
   Platform,
   PermissionsAndroid,
-  AsyncStorage
+  AsyncStorage,
+  CameraRoll
 } from "react-native";
 import {
   Text,
@@ -22,8 +23,10 @@ import {
   FooterTab,
   Button
 } from "native-base";
+import { Camera, Permissions, FileSystem } from "expo";
+import { getDriveFolderContents } from "../Calls";
 
-export default class WelcomeScreen extends Component<{}> {
+export default class WelcomeScreen extends Component {
   async componentWillMount() {
     await Expo.Font.loadAsync({
       Roboto: require("native-base/Fonts/Roboto.ttf"),
@@ -31,6 +34,7 @@ export default class WelcomeScreen extends Component<{}> {
       Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf")
     });
     this.setState({ isReady: true });
+    //getDriveFolderContents("12fasnJod7Qxkimq4VK1KyomBYJxMLAWd");
   }
 
   constructor(props) {
@@ -43,6 +47,7 @@ export default class WelcomeScreen extends Component<{}> {
       android: () => {
         this.requestLocationPermission();
         this.requestCameraPermission();
+        this.requestCameraRollPermission();
       }
     });
     //this.signInWithGoogleAsync();
@@ -88,6 +93,38 @@ export default class WelcomeScreen extends Component<{}> {
       console.warn(err);
     }
   }
+  async requestReadStoragePermission() {
+    console.log("You ask to use the camera");
+
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: "InventoryApp Storage Permission",
+          message: "InventoryApp needs read storage"
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("You can read now");
+      } else {
+        console.log("storage read permission denied");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+  async requestCameraRollPermission() {
+    const { Permissions } = Expo;
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status !== "granted") {
+      alert(
+        "Hey! You might want to enable notifications for my app, they are good."
+      );
+    } else {
+      alert("I have permissions");
+    }
+  }
+
   componentDidMount() {
     this._loadInitialState().done();
     //  Alert.alert('null', userNameValue);
@@ -105,7 +142,7 @@ export default class WelcomeScreen extends Component<{}> {
           this.props.navigation.navigate("BarcodeScanner", {
             username: this.state.username
           });
-        }, 2500);
+        }, 1500);
         //        this.setState({selectedValue: userNameValue});
         //      this._appendMessage('Recovered selection from disk: ' + userNameValue);
       } else {
@@ -128,6 +165,32 @@ export default class WelcomeScreen extends Component<{}> {
 
     this.props.navigation.navigate("UserSelection");
   };
+  requestPermissionsButton = async () => {
+    clearTimeout(this.timeoutHandle);
+
+    await this.requestWriteStoragePermission();
+  };
+  movephotostoroll = async () => {
+    clearTimeout(this.timeoutHandle);
+    let photoList = await FileSystem.readDirectoryAsync(
+      FileSystem.documentDirectory + "/photos"
+    );
+    alert(photoList.length);
+    for (let photo of photoList) {
+      //alert(photo);
+      if (photo.slice(-3) == "jpg") {
+        CameraRoll.saveToCameraRoll(
+          FileSystem.documentDirectory + "/photos/" + photo
+        );
+      }
+    }
+    alert("photos are in camera roll now");
+    // for (photo in photoList) {
+    //   CameraRoll.saveToCameraRoll(
+    //     FileSystem.documentDirectory + "/photos/" + photo
+    //   );
+    // }
+  };
   loading() {
     return (
       <Container>
@@ -143,6 +206,14 @@ export default class WelcomeScreen extends Component<{}> {
         <Content>
           <Title style={{ paddingTop: 70, fontSize: 50 }}>Welcome</Title>
           <Title style={{ fontSize: 40 }}>{this.state.username}</Title>
+          {/*}
+          <Button onPress={this.requestPermissionsButton}>
+            <Text>CLICK ME FIRST PLEASE</Text>
+          </Button>
+          <Button onPress={this.movephotostoroll}>
+            <Text>MOVE PICTURES TO ROLL</Text>
+          </Button>
+*/}
         </Content>
         <Footer>
           <FooterTab>
