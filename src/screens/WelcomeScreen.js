@@ -24,7 +24,7 @@ import {
   Button
 } from "native-base";
 import { Camera, Permissions, FileSystem } from "expo";
-import { getDriveFolderContents } from "../Calls";
+import { getUserType } from "../Calls";
 
 export default class WelcomeScreen extends Component {
   async componentWillMount() {
@@ -34,7 +34,6 @@ export default class WelcomeScreen extends Component {
       Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf")
     });
     this.setState({ isReady: true });
-    //getDriveFolderContents("12fasnJod7Qxkimq4VK1KyomBYJxMLAWd");
   }
 
   constructor(props) {
@@ -133,18 +132,35 @@ export default class WelcomeScreen extends Component {
   _loadInitialState = async () => {
     try {
       var userNameValue = await AsyncStorage.getItem("userName");
-      var userTypeValue = await AsyncStorage.getItem("userType");
-      global.userType = userTypeValue;
+      console.log(userNameValue);
+
+      //  var userTypeValue = await AsyncStorage.getItem("userType");
       if (userNameValue !== null) {
+        let userTypeValue = await getUserType(JSON.parse(userNameValue));
+        AsyncStorage.setItem("userType", JSON.stringify(userTypeValue));
+
+        global.userType = userTypeValue;
+
         this.setState({ username: userNameValue });
         this.setState({ loaded: true });
-        this.timeoutHandle = setTimeout(() => {
-          this.props.navigation.navigate("BarcodeScanner", {
-            username: this.state.username
-          });
-        }, 1500);
-        //        this.setState({selectedValue: userNameValue});
-        //      this._appendMessage('Recovered selection from disk: ' + userNameValue);
+
+        if (userTypeValue < 50 && userTypeValue > 0) {
+          this.timeoutHandle = setTimeout(() => {
+            if (userTypeValue == "2" || userTypeValue == "4") {
+              this.props.navigation.navigate("BarcodeScanner", {
+                username: this.state.username
+              });
+            } else {
+              this.props.navigation.navigate("BarcodeScanner", {
+                username: this.state.username
+              });
+            }
+          }, 1500);
+          //        this.setState({selectedValue: userNameValue});
+          //      this._appendMessage('Recovered selection from disk: ' + userNameValue);
+        } else {
+          Alert.alert("Not authorized", "User not authorized anymore");
+        }
       } else {
         this.props.navigation.navigate("UserSelection");
         this.state.username = "";

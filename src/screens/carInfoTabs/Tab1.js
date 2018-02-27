@@ -24,6 +24,10 @@ export default class Tab1 extends Component {
             <Text>Color</Text>
             <Text style={styles.text}>{this.props.basicInfo.color}</Text>
           </View>
+          <View>
+            <Text>Comments</Text>
+            <Text style={styles.text}>{this.props.basicInfo.comments}</Text>
+          </View>
         </View>
       </Container>
     );

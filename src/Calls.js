@@ -208,7 +208,7 @@ export async function getVehicleInfo(vinSearch) {
       vehicleInformation = await fetch(
         "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/VehicleDetails!A" +
           rowNum +
-          "%3AT" +
+          "%3AAX" +
           rowNum +
           "?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
           apiKEY

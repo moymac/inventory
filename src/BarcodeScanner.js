@@ -23,9 +23,13 @@ import {
   Label,
   FooterTab,
   ActionSheet,
-  Button
+  Button,
+  Drawer,
+  Fab,
+  Icon
 } from "native-base";
 import { BarCodeScanner, Permissions } from "expo";
+import SideBar from "./SideBar";
 
 import { NavigationActions } from "react-navigation";
 import { refreshToken } from "./Calls";
@@ -160,14 +164,22 @@ export default class BarcodeScanner extends Component {
     },
     headerLeft: null
   };
+  fabButton = () => {
+    this.drawer._root.open();
+  };
   buttonAdmin = async () => {
     //    this.setState({ shouldRender: false });
-
+    //
     this.props.navigation.navigate("UserAdministration", {
       accessToken: await refreshToken(this.state.refreshToken)
     });
   };
-
+  closeDrawer = () => {
+    this.drawer._root.close();
+  };
+  openDrawer = () => {
+    this.drawer._root.open();
+  };
   buttonClick = async () => {
     //  console.log('message');
     //  alert(this.state.username);
@@ -372,71 +384,92 @@ export default class BarcodeScanner extends Component {
         return <Text>No access to camera</Text>;
       } else {
         return (
-          <View style={{ flex: 1, justifyContent: "center" }}>
-            <BarCodeScanner
-              onBarCodeRead={this._handleBarCodeRead}
-              style={StyleSheet.absoluteFill}
-            />
-            {this.state.blinking ? (
-              <View
-                style={{
-                  borderBottomColor: "red",
-                  borderBottomWidth: 1,
-                  marginLeft: 35,
-                  marginRight: 35
-                }}
+          <Drawer
+            ref={ref => {
+              this.drawer = ref;
+            }}
+            content={
+              <SideBar
+                navigation={this.props.navigation}
+                onUserAdminPress={this.buttonAdmin}
+                onInventoryPress={this.buttonInventory}
               />
-            ) : null}
+            }
+            onClose={() => this.closeDrawer()}
+          >
+            <View style={{ flex: 1, justifyContent: "center" }}>
+              <BarCodeScanner
+                onBarCodeRead={this._handleBarCodeRead}
+                style={StyleSheet.absoluteFill}
+              />
+              {this.state.blinking ? (
+                <View
+                  style={{
+                    borderBottomColor: "red",
+                    borderBottomWidth: 1,
+                    marginLeft: 35,
+                    marginRight: 35
+                  }}
+                />
+              ) : null}
 
-            <KeyboardAvoidingView
-              behavior="padding"
-              style={{
-                flex: 1,
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0
-              }}
-            >
-              <View
+              <KeyboardAvoidingView
+                behavior="padding"
                 style={{
-                  flex: 1
+                  flex: 1,
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0
                 }}
               >
-                <Item
-                  error={this.state.inputerror}
+                <View
                   style={{
                     flex: 1
                   }}
                 >
-                  <Input
+                  <Item
+                    error={this.state.inputerror}
                     style={{
-                      flex: 1,
-                      color: "white",
-                      textAlign: "center",
-                      backgroundColor: "rgba(0,0,0,0.3)",
-                      fontSize: 30
+                      flex: 1
                     }}
-                    //  value = {this.state.name}
-                    //  editable = {true}
-                    //  placeholder = '{this.state.name}',
-                    placeholder="VIN"
-                    onChangeText={barcode => this.setState({ barcode })}
-                    value={this.state.barcode}
-                  />
-                </Item>
+                  >
+                    <Input
+                      style={{
+                        flex: 1,
+                        color: "white",
+                        textAlign: "center",
+                        backgroundColor: "rgba(0,0,0,0.3)",
+                        fontSize: 30
+                      }}
+                      //  value = {this.state.name}
+                      //  editable = {true}
+                      //  placeholder = '{this.state.name}',
+                      placeholder="VIN"
+                      onChangeText={barcode => this.setState({ barcode })}
+                      value={this.state.barcode}
+                    />
+                  </Item>
 
-                <Button full onPress={this.buttonClick}>
-                  <Text>Start</Text>
-                </Button>
-                {this.state.userType == "4" ? (
-                  <Button full dark onPress={this.buttonAdmin}>
-                    <Text>User administration</Text>
+                  <Button full onPress={this.buttonClick}>
+                    <Text>Start</Text>
                   </Button>
-                ) : null}
-              </View>
-            </KeyboardAvoidingView>
-          </View>
+                  {this.state.userType == "4" ? (
+                    <Fab
+                      active={true}
+                      direction="up"
+                      containerStyle={{}}
+                      style={{ backgroundColor: "#5067FF" }}
+                      position="bottomRight"
+                      onPress={this.fabButton}
+                    >
+                      <Icon name="add" />
+                    </Fab>
+                  ) : null}
+                </View>
+              </KeyboardAvoidingView>
+            </View>
+          </Drawer>
         );
       }
     }

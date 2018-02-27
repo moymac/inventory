@@ -34,19 +34,26 @@ import UserAdministration from "./src/screens/UserAdministration";
 //     'Shake or press menu button for dev menu',
 // });
 
-const AppInventory = StackNavigator({
-  Home: { screen: WelcomeScreen },
-  BarcodeScanner: { screen: BarcodeScanner },
-  WelcomeScreen: { screen: WelcomeScreen },
-  UserSelection: { screen: UserSelection },
-  IssueUpdate: { screen: IssueUpdate },
-  LocationUpdate: { screen: LocationUpdate },
-  PictureUpload: { screen: PictureUpload },
-  ArbitrationUpdate: { screen: ArbitrationUpdate },
-  ConversionsMain: { screen: ConversionsMain },
-  VehicleInfo: { screen: VehicleInfo },
-  UserAdministration: { screen: UserAdministration }
-});
+const AppInventory = StackNavigator(
+  {
+    Home: { screen: WelcomeScreen },
+    BarcodeScanner: { screen: BarcodeScanner },
+    WelcomeScreen: { screen: WelcomeScreen },
+    UserSelection: { screen: UserSelection },
+    IssueUpdate: { screen: IssueUpdate },
+    LocationUpdate: { screen: LocationUpdate },
+    PictureUpload: { screen: PictureUpload },
+    ArbitrationUpdate: { screen: ArbitrationUpdate },
+    ConversionsMain: { screen: ConversionsMain },
+    VehicleInfo: { screen: VehicleInfo },
+    UserAdministration: { screen: UserAdministration }
+  },
+  {
+    navigationOptions: {
+      gesturesEnabled: false
+    }
+  }
+);
 
 //export default AppInventory;
 export default () => (

@@ -217,10 +217,14 @@ export default class CameraExample extends React.Component {
     // alert(FileSystem.documentDirectory);
     if (this.state.photoId > 7) {
       pictureName =
-        this.state.vin + "_" + pictureNames[this.state.photoId] + extraCounter;
+        this.state.vin.slice(-6) +
+        "_" +
+        pictureNames[this.state.photoId] +
+        extraCounter;
       extraCounter++;
     } else {
-      pictureName = this.state.vin + "_" + pictureNames[this.state.photoId];
+      pictureName =
+        this.state.vin.slice(-6) + "_" + pictureNames[this.state.photoId];
     }
     console.log("picturename", pictureName);
     if (this.camera) {

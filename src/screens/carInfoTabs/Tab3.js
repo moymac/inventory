@@ -20,56 +20,50 @@ export default class Tab3 extends Component {
             <View>
               <Text>Purchase price</Text>
               <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.purchasePrice)}
+                {this.props.moneyInfo.purchasePrice}
               </Text>
             </View>
             <View>
               <Text>Purchase HST</Text>
               <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.purchaseHST)}
+                {this.props.moneyInfo.purchaseHST}
               </Text>
             </View>
           </View>
           <View>
             <View>
               <Text>Buyer Fee</Text>
-              <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.buyerFee)}
-              </Text>
+              <Text style={styles.text}>{this.props.moneyInfo.buyerFee}</Text>
             </View>
             <View>
               <Text>Other Fees</Text>
-              <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.otherFees)}
-              </Text>
+              <Text style={styles.text}>{this.props.moneyInfo.otherFees}</Text>
             </View>
             <View>
               <Text>Fees HST</Text>
-              <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.feesHST)}
-              </Text>
+              <Text style={styles.text}>{this.props.moneyInfo.feesHST}</Text>
             </View>
           </View>
           <View>
             <View>
               <Text>Taxable purchase price</Text>
               <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.taxablePurchase)}
+                {this.props.moneyInfo.taxablePurchase}
               </Text>
             </View>
             <View>
               <Text>Total HST</Text>
-              <Text style={styles.text}>
-                {convertToCurrency(this.props.moneyInfo.totalHST)}
-              </Text>
+              <Text style={styles.text}>{this.props.moneyInfo.totalHST}</Text>
             </View>
           </View>
 
           <View>
             <Text style={{ fontSize: 23, fontWeight: "bold" }}>TOTAL</Text>
-            <Text style={styles.text}>
-              {convertToCurrency(this.props.moneyInfo.grandTotal)}
-            </Text>
+            <Text style={styles.text}>{this.props.moneyInfo.grandTotal}</Text>
+          </View>
+          <View>
+            <Text>Payment status</Text>
+            <Text style={styles.text}>paymentStatus</Text>
           </View>
         </View>
       </Container>

@@ -18,6 +18,9 @@ import { getVehicleInfo } from "../Calls";
 import Tab1 from "./carInfoTabs/Tab1";
 import Tab2 from "./carInfoTabs/Tab2";
 import Tab3 from "./carInfoTabs/Tab3";
+import Tab4 from "./carInfoTabs/Tab4";
+import Tab5 from "./carInfoTabs/Tab5";
+import Tab6 from "./carInfoTabs/Tab6";
 
 export default class TabsExample extends Component {
   state = {
@@ -47,18 +50,55 @@ export default class TabsExample extends Component {
     let trimLevel = allData[4];
     let bodyType = allData[5];
     let color = allData[6];
-    let miles = allData[7];
-    let kilometers = allData[8];
-    let purchaseLocation = allData[9];
-    let purchaseDate = allData[10];
-    let purchasePrice = allData[11];
-    let purchaseHST = allData[12];
-    let buyerFee = allData[13];
-    let otherFees = allData[14];
-    let feesHST = allData[15];
-    let taxablePurchase = allData[16];
-    let totalHST = allData[17];
-    let grandTotal = allData[18];
+    let comments = allData[7];
+
+    let miles = allData[8];
+    let kilometers = allData[9];
+    let purchaseLocation = allData[10];
+    let purchaseDate = allData[11];
+
+    let purchasePrice = allData[12];
+    let purchaseHST = allData[13];
+    let buyerFee = allData[14];
+    let otherFees = allData[15];
+    let feesHST = allData[16];
+    let taxablePurchase = allData[17];
+    let totalHST = allData[18];
+    let grandTotal = allData[19];
+
+    let onQcVoid = allData[20];
+    let vehicleStatus = allData[21];
+    let initials = allData[22];
+    let recall = allData[23];
+    let recallNo = allData[24];
+    let prearrivalNotes = allData[25];
+    let dateOfEntry = allData[26];
+    let transRI = allData[27];
+    let importer = allData[28];
+    let entryNumber = allData[29];
+    let releaseDate = allData[30];
+    let transMan = allData[31];
+    let etaMan = allData[32];
+    let regiStatus = allData[33];
+    let arrivalDate = allData[34];
+
+    let bOSCheck = allData[35];
+    let ownership = allData[36];
+    let registrationNo = allData[37];
+    let billOfSale = allData[38];
+    let applicationDate = allData[39];
+    let confirmationDate = allData[40];
+
+    let univKey = allData[41];
+    let saleDate = allData[42];
+    let purchaser = allData[43];
+    let address = allData[44];
+    let city = allData[45];
+    let zippostl = allData[46];
+    let sleNet = allData[47];
+    let slePrc = allData[48];
+    let salesNo = allData[49];
+
     console.log("year", year);
     console.log("purchaseDate", purchaseDate);
     this.setState({
@@ -69,7 +109,8 @@ export default class TabsExample extends Component {
         model,
         trimLevel,
         bodyType,
-        color
+        color,
+        comments
       },
       secondaryInfo: {
         miles,
@@ -86,9 +127,45 @@ export default class TabsExample extends Component {
         taxablePurchase,
         totalHST,
         grandTotal
+      },
+      shippingInfo: {
+        onQcVoid,
+        vehicleStatus,
+        initials,
+        recall,
+        recallNo,
+        prearrivalNotes,
+        dateOfEntry,
+        transRI,
+        importer,
+        entryNumber,
+        releaseDate,
+        transMan,
+        etaMan,
+        regiStatus,
+        arrivalDate
+      },
+      adminInfo: {
+        bOSCheck,
+        ownership,
+        registrationNo,
+        billOfSale,
+        applicationDate,
+        confirmationDate
+      },
+      salesInfo: {
+        univKey,
+        saleDate,
+        purchaser,
+        address,
+        city,
+        zippostl,
+        sleNet,
+        slePrc,
+        salesNo
       }
     });
-    console.log(this.state.basicInfo);
+    console.log(allData);
   }
 
   static navigationOptions = {
@@ -127,7 +204,7 @@ export default class TabsExample extends Component {
             <Tab
               heading={
                 <TabHeading>
-                  <Icon name="information-circle" />
+                  <Icon name="speedometer" />
                 </TabHeading>
               }
             >
@@ -137,11 +214,44 @@ export default class TabsExample extends Component {
               <Tab
                 heading={
                   <TabHeading>
-                    <Icon name="cash" />
+                    <Icon name="basket" />
                   </TabHeading>
                 }
               >
                 <Tab3 moneyInfo={this.state.moneyInfo} />
+              </Tab>
+            ) : null}
+            {userType == "2" || userType == "4" ? (
+              <Tab
+                heading={
+                  <TabHeading>
+                    <Icon name="boat" />
+                  </TabHeading>
+                }
+              >
+                <Tab4 shippingInfo={this.state.shippingInfo} />
+              </Tab>
+            ) : null}
+            {userType == "2" || userType == "4" ? (
+              <Tab
+                heading={
+                  <TabHeading>
+                    <Icon name="folder" />
+                  </TabHeading>
+                }
+              >
+                <Tab5 adminInfo={this.state.adminInfo} />
+              </Tab>
+            ) : null}
+            {userType == "2" || userType == "4" ? (
+              <Tab
+                heading={
+                  <TabHeading>
+                    <Icon name="cash" />
+                  </TabHeading>
+                }
+              >
+                <Tab6 salesInfo={this.state.salesInfo} />
               </Tab>
             ) : null}
           </Tabs>
