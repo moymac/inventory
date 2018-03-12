@@ -41,6 +41,17 @@ export default class SideBar extends Component {
               <Icon name="arrow-forward" />
             </Right>
           </ListItem>
+          <ListItem icon onPress={this.props.onPartsInventoryPress}>
+            <Left>
+              <Icon name="speedometer" />
+            </Left>
+            <Body>
+              <Text>Parts inventory</Text>
+            </Body>
+            <Right>
+              <Icon name="arrow-forward" />
+            </Right>
+          </ListItem>
         </List>
       </View>
     );

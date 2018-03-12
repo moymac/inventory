@@ -32,14 +32,22 @@ export default class TabsExample extends Component {
   constructor(props) {
     super(props);
     userType = global.userType;
+    userPermissions = global.userPermissions;
+    console.log("permissions", userPermissions);
   }
   async componentWillMount() {
     const { params } = this.props.navigation.state;
     this.state.vin = params.scannedValue;
 
     ///////////CREATE A CASE WHEN VEHICLEDATA GOT NO RESULTS
-    let vehicleData = await getVehicleInfo(this.state.vin);
-    this.splitVehicleData(await vehicleData.values[0]);
+    try {
+      let vehicleData = await getVehicleInfo(this.state.vin);
+      console.log(vehicleData);
+      this.splitVehicleData(await vehicleData.values[0]);
+    } catch (error) {
+      console.log(error);
+      alert("not found");
+    }
     //    this.splitVehicleData(await getVehicleInfo(this.state.vin));
   }
 
@@ -51,53 +59,56 @@ export default class TabsExample extends Component {
     let bodyType = allData[5];
     let color = allData[6];
     let comments = allData[7];
+    let lastLocationAddress = allData[8];
+    let lastLocationLatLong = allData[9];
+    // let lastLocationLongitude = [10];
 
-    let miles = allData[8];
-    let kilometers = allData[9];
-    let purchaseLocation = allData[10];
-    let purchaseDate = allData[11];
+    let miles = allData[10];
+    let kilometers = allData[11];
+    let purchaseLocation = allData[12];
+    let purchaseDate = allData[13];
 
-    let purchasePrice = allData[12];
-    let purchaseHST = allData[13];
-    let buyerFee = allData[14];
-    let otherFees = allData[15];
-    let feesHST = allData[16];
-    let taxablePurchase = allData[17];
-    let totalHST = allData[18];
-    let grandTotal = allData[19];
+    let purchasePrice = allData[14];
+    let purchaseHST = allData[15];
+    let buyerFee = allData[16];
+    let otherFees = allData[17];
+    let feesHST = allData[18];
+    let taxablePurchase = allData[19];
+    let totalHST = allData[20];
+    let grandTotal = allData[21];
 
-    let onQcVoid = allData[20];
-    let vehicleStatus = allData[21];
-    let initials = allData[22];
-    let recall = allData[23];
-    let recallNo = allData[24];
-    let prearrivalNotes = allData[25];
-    let dateOfEntry = allData[26];
-    let transRI = allData[27];
-    let importer = allData[28];
-    let entryNumber = allData[29];
-    let releaseDate = allData[30];
-    let transMan = allData[31];
-    let etaMan = allData[32];
-    let regiStatus = allData[33];
-    let arrivalDate = allData[34];
+    let onQcVoid = allData[22];
+    let vehicleStatus = allData[23];
+    let initials = allData[24];
+    let recall = allData[25];
+    let recallNo = allData[26];
+    let prearrivalNotes = allData[27];
+    let dateOfEntry = allData[28];
+    let transRI = allData[29];
+    let importer = allData[30];
+    let entryNumber = allData[31];
+    let releaseDate = allData[32];
+    let transMan = allData[33];
+    let etaMan = allData[34];
+    let regiStatus = allData[35];
+    let arrivalDate = allData[36];
 
-    let bOSCheck = allData[35];
-    let ownership = allData[36];
-    let registrationNo = allData[37];
-    let billOfSale = allData[38];
-    let applicationDate = allData[39];
-    let confirmationDate = allData[40];
+    let bOSCheck = allData[37];
+    let ownership = allData[38];
+    let registrationNo = allData[39];
+    let billOfSale = allData[40];
+    let applicationDate = allData[41];
+    let confirmationDate = allData[42];
 
-    let univKey = allData[41];
-    let saleDate = allData[42];
-    let purchaser = allData[43];
-    let address = allData[44];
-    let city = allData[45];
-    let zippostl = allData[46];
-    let sleNet = allData[47];
-    let slePrc = allData[48];
-    let salesNo = allData[49];
+    let univKey = allData[43];
+    let saleDate = allData[44];
+    let purchaser = allData[45];
+    let address = allData[46];
+    let city = allData[47];
+    let zippostl = allData[48];
+    let sleNet = allData[49];
+    let slePrc = allData[50];
+    let salesNo = allData[51];
 
     console.log("year", year);
     console.log("purchaseDate", purchaseDate);
@@ -110,7 +121,9 @@ export default class TabsExample extends Component {
         trimLevel,
         bodyType,
         color,
-        comments
+        comments,
+        lastLocationAddress,
+        lastLocationLatLong
       },
       secondaryInfo: {
         miles,
@@ -199,7 +212,10 @@ export default class TabsExample extends Component {
                 </TabHeading>
               }
             >
-              <Tab1 basicInfo={this.state.basicInfo} />
+              <Tab1
+                navigation={this.props.navigation}
+                basicInfo={this.state.basicInfo}
+              />
             </Tab>
             <Tab
               heading={
@@ -210,7 +226,7 @@ export default class TabsExample extends Component {
             >
               <Tab2 secondaryInfo={this.state.secondaryInfo} />
             </Tab>
-            {userType == "2" || userType == "4" ? (
+            {userPermissions[4] == "1" ? (
               <Tab
                 heading={
                   <TabHeading>
@@ -221,7 +237,7 @@ export default class TabsExample extends Component {
                 <Tab3 moneyInfo={this.state.moneyInfo} />
               </Tab>
             ) : null}
-            {userType == "2" || userType == "4" ? (
+            {userPermissions[4] == "1" ? (
               <Tab
                 heading={
                   <TabHeading>
@@ -232,7 +248,7 @@ export default class TabsExample extends Component {
                 <Tab4 shippingInfo={this.state.shippingInfo} />
               </Tab>
             ) : null}
-            {userType == "2" || userType == "4" ? (
+            {userPermissions[4] == "1" ? (
               <Tab
                 heading={
                   <TabHeading>
@@ -243,7 +259,7 @@ export default class TabsExample extends Component {
                 <Tab5 adminInfo={this.state.adminInfo} />
               </Tab>
             ) : null}
-            {userType == "2" || userType == "4" ? (
+            {userPermissions[4] == "1" ? (
               <Tab
                 heading={
                   <TabHeading>

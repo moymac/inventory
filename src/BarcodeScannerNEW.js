@@ -31,7 +31,6 @@ import {
 import { BarCodeScanner, Permissions } from "expo";
 import SideBar from "./SideBar";
 
-import { NavigationActions } from "react-navigation";
 import { refreshToken } from "./Calls";
 const COMMON = [
   "Update location",
@@ -39,10 +38,33 @@ const COMMON = [
   "Upload pictures",
   "Vehicle Info"
 ];
-
+var userFunctionNames = [];
+var userFunctionScreens = [];
 const BUTTONSDRIVER = [...COMMON, "Cancel"];
 const BUTTONSSALES = [...COMMON, "Arbitration Update", "Cancel"];
 const BUTTONCONVERSIONS = ["Vehicle Info", "Conversion update", "Cancel"];
+const ALLFUNCTIONSCREENS = [
+  "VehicleInfo",
+  "InventoryList",
+  "RunList",
+  "LocationUpdate",
+  "IssueUpdate",
+  "PictureUpload",
+  "ConversionsMain",
+  "ArbitrationUpdate",
+  "PartsInventory"
+];
+const ALLFUNCTIONNAMES = [
+  "Vehicle info",
+  "Inventory list",
+  "Run list",
+  "Location update",
+  "Issue update",
+  "Picture upload",
+  "Conversion update",
+  "Arbitration update",
+  "Parts inventory"
+];
 
 export default class BarcodeScanner extends Component {
   state = {
@@ -53,14 +75,15 @@ export default class BarcodeScanner extends Component {
     userType: "",
     userName: "",
     accessToken: "",
-    refreshToken: ""
+    refreshToken: "",
+    userPermissions: []
   };
 
   async componentWillMount() {
     Keyboard.dismiss();
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted" });
-    this.setState({ shouldRender: false });
+    this.setState({ shouldRender: true });
   }
 
   constructor(props) {
@@ -116,9 +139,10 @@ export default class BarcodeScanner extends Component {
   }
   _loadInitialState = async () => {
     try {
-      AsyncStorage.getItem("userType").then(value => {
+      AsyncStorage.getItem("userPermissions").then(value => {
         const data = JSON.parse(value);
-        this.setState({ userType: data });
+        this.setState({ userPermissions: data });
+        global.userPermissions = data;
       });
       AsyncStorage.getItem("userName").then(value => {
         const data = JSON.parse(value);
@@ -132,7 +156,6 @@ export default class BarcodeScanner extends Component {
         const data = JSON.parse(value);
         this.setState({ refreshToken: data });
       });
-
       // var userNameValue = await JSON.parse(AsyncStorage.getItem("userName"));
       // var userTypeValue = await JSON.parse(AsyncStorage.getItem("userType"));
       // global.userType = userTypeValue;
@@ -166,6 +189,19 @@ export default class BarcodeScanner extends Component {
   fabButton = () => {
     this.drawer._root.open();
   };
+  buildArrays = () => {
+    userFunctionNames = [];
+    userFunctionScreens = [];
+    let permittedElements = this.state.userPermissions;
+    for (let i = 0; i < permittedElements.length; i++) {
+      if (permittedElements[i + 5] === "1") {
+        //console.log(userFunctionNames, i);
+        userFunctionNames = [...userFunctionNames, ALLFUNCTIONNAMES[i]];
+        userFunctionScreens = [...userFunctionScreens, ALLFUNCTIONSCREENS[i]];
+      }
+    }
+    userFunctionNames = [...userFunctionNames, "Cancel"];
+  };
   buttonAdmin = async () => {
     //    this.setState({ shouldRender: false });
     //
@@ -173,6 +209,33 @@ export default class BarcodeScanner extends Component {
       accessToken: await refreshToken(this.state.refreshToken)
     });
   };
+  buttonInventory = async () => {
+    //    this.setState({ shouldRender: false });
+    //
+    this.props.navigation.navigate("InventoryList", {
+      accessToken: await refreshToken(this.state.refreshToken)
+    });
+  };
+  buttonParts = async () => {
+    let newAccessToken = await refreshToken(this.state.refreshToken);
+    console.log("newAccessToken", newAccessToken);
+    var globalParams = await {
+      userType: this.state.userType,
+      userName: this.state.userName,
+      latitude: this.state.latitude,
+      longitude: this.state.longitude,
+      address: this.state.address,
+      error: this.state.error,
+      accessToken: newAccessToken,
+      refreshToken: this.state.refreshToken
+    };
+    //    this.setState({ shouldRender: false });
+    //
+    this.props.navigation.navigate("PartsInventory", {
+      ...globalParams
+    });
+  };
+
   closeDrawer = () => {
     this.drawer._root.close();
   };
@@ -180,6 +243,8 @@ export default class BarcodeScanner extends Component {
     this.drawer._root.open();
   };
   buttonClick = async () => {
+    this.buildArrays();
+    //console.log("funcnames", userFunctionNames, "screens", userFunctionScreens);
     //  console.log('message');
     //  alert(this.state.username);
     //    AsyncStorage.setItem("userName", JSON.stringify(this.state.username));
@@ -206,192 +271,23 @@ export default class BarcodeScanner extends Component {
       };
       //action: NavigationActions.navigate({ routeName: "SubProfileRoute" })
 
-      switch (this.state.userType) {
-        case "5":
-          ActionSheet.show(
-            {
-              options: ["Upload pictures", "Cancel"],
-              cancelButtonIndex: 1,
-              title: scannedValue
-            },
-            buttonIndex => {
-              //  alert(buttonIndex);
-              //    this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
-              switch (buttonIndex) {
-                case 0:
-                  this.props.navigation.navigate("PictureUpload", {
-                    ...globalParams
-                  });
-                  break;
-
-                default:
-                  this.setState({ shouldRender: true });
-                  break;
-              }
-            }
-          );
-          break;
-        case "1":
-          ActionSheet.show(
-            {
-              options: BUTTONSDRIVER,
-              cancelButtonIndex: 4,
-              title: scannedValue
-            },
-            buttonIndex => {
-              //  alert(buttonIndex);
-              //      this.setState({ clicked: BUTTONSDRIVER[buttonIndex] });
-              switch (buttonIndex) {
-                case 0:
-                  this.props.navigation.navigate("LocationUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 1:
-                  this.props.navigation.navigate("IssueUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 2:
-                  this.props.navigation.navigate("PictureUpload", {
-                    ...globalParams
-                  });
-                  break;
-                case 3:
-                  this.props.navigation.navigate("VehicleInfo", {
-                    ...globalParams
-                  });
-                  break;
-                default:
-                  this.setState({ shouldRender: true });
-                  break;
-              }
-            }
-          );
-          break;
-        case "2":
-          ActionSheet.show(
-            {
-              options: BUTTONSSALES,
-              cancelButtonIndex: 5,
-              title: scannedValue
-            },
-            buttonIndex => {
-              //  alert(buttonIndex);
-              //      this.setState({ clicked: BUTTONSSALES[buttonIndex] });
-              switch (buttonIndex) {
-                case 0:
-                  this.props.navigation.navigate("LocationUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 1:
-                  this.props.navigation.navigate("IssueUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 2:
-                  this.props.navigation.navigate("PictureUpload", {
-                    ...globalParams
-                  });
-                  break;
-                case 3:
-                  this.props.navigation.navigate("VehicleInfo", {
-                    ...globalParams
-                  });
-                  break;
-                case 4:
-                  this.props.navigation.navigate("ArbitrationUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                default:
-                  this.setState({ shouldRender: true });
-                  break;
-              }
-            }
-          );
-          break;
-        case "3":
-          ActionSheet.show(
-            {
-              options: BUTTONCONVERSIONS,
-              cancelButtonIndex: 2,
-              title: scannedValue
-            },
-            buttonIndex => {
-              //  alert(buttonIndex);
-              //      this.setState({ clicked: BUTTONSSALES[buttonIndex] });
-              switch (buttonIndex) {
-                case 0:
-                  this.props.navigation.navigate("VehicleInfo", {
-                    ...globalParams
-                  });
-                  break;
-                case 1:
-                  this.props.navigation.navigate("ConversionsMain", {
-                    ...globalParams
-                  });
-                  break;
-                default:
-                  this.setState({ shouldRender: true });
-                  break;
-              }
-            }
-          );
-          break;
-        case "4":
-          ActionSheet.show(
-            {
-              options: BUTTONSSALES,
-              cancelButtonIndex: 5,
-              title: scannedValue
-            },
-            buttonIndex => {
-              //  alert(buttonIndex);
-              //      this.setState({ clicked: BUTTONSSALES[buttonIndex] });
-              switch (buttonIndex) {
-                case 0:
-                  this.props.navigation.navigate("LocationUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 1:
-                  this.props.navigation.navigate("IssueUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 2:
-                  this.props.navigation.navigate("PictureUpload", {
-                    ...globalParams
-                  });
-                  break;
-                case 3:
-                  this.props.navigation.navigate("VehicleInfo", {
-                    ...globalParams
-                  });
-                  break;
-                case 4:
-                  this.props.navigation.navigate("ArbitrationUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                case 5:
-                  this.props.navigation.navigate("FaceplateUpdate", {
-                    ...globalParams
-                  });
-                  break;
-                default:
-                  this.setState({ shouldRender: true });
-                  break;
-              }
-            }
-          );
-          break;
-        default:
-          this.setState({ shouldRender: true });
-          break;
-      }
+      ActionSheet.show(
+        {
+          options: userFunctionNames,
+          cancelButtonIndex: userFunctionNames.length + 1,
+          title: scannedValue
+        },
+        buttonIndex => {
+          if (buttonIndex == userFunctionNames.length - 1) {
+            //  console.log("cancel");
+            this.setState({ shouldRender: true });
+          } else {
+            this.props.navigation.navigate(userFunctionScreens[buttonIndex], {
+              ...globalParams
+            });
+          }
+        }
+      );
     }
   };
   _handleBarCodeRead = ({ type, data }) => {
@@ -420,6 +316,7 @@ export default class BarcodeScanner extends Component {
                 navigation={this.props.navigation}
                 onUserAdminPress={this.buttonAdmin}
                 onInventoryPress={this.buttonInventory}
+                onPartsInventoryPress={this.buttonParts}
               />
             }
             onClose={() => this.closeDrawer()}
@@ -481,7 +378,8 @@ export default class BarcodeScanner extends Component {
                   <Button full onPress={this.buttonClick}>
                     <Text>Start</Text>
                   </Button>
-                  {this.state.userType == "4" ? (
+                  {this.state.userPermissions[3] == "1" ||
+                  this.state.userPermissions[13] == "1" ? (
                     <Fab
                       active={true}
                       direction="up"

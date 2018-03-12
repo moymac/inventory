@@ -19,7 +19,7 @@ const flashModeOrder = {
   torch: "off"
 };
 const pictureNames = [
-  "Exterior",
+  "Exterior_front",
   "VIN_plate",
   "Manufacturer_label",
   "Tire_pressure_label",
@@ -38,14 +38,16 @@ export default class CameraExample extends React.Component {
     hasCameraPermission: null,
     flash: "off",
     photoId: 0,
+    ratio: "16:9",
     showGallery: false,
     showPreview: false,
     type: Camera.Constants.Type.back,
-    folderId: "",
-    successUpload: false
+    folderId: ""
   };
 
   async componentWillMount() {
+    Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.ALL);
+
     const { params } = this.props.navigation.state;
     this.state.vin = params.scannedValue;
     this.state.userName = params.userName;
@@ -78,7 +80,6 @@ export default class CameraExample extends React.Component {
     ];
     appendToSheet(this.state.accessToken, "vehiclePictures", data);
 
-    console.log("statefolderid", folderId);
     FileSystem.makeDirectoryAsync(
       FileSystem.documentDirectory + "photos"
     ).catch(e => {
@@ -108,6 +109,9 @@ export default class CameraExample extends React.Component {
     // headerLeft: null
   };
   async uploadAndAlert(token, folderid, picname, filebase) {
+    console.log(picname);
+    picname = picname.replace(new RegExp("_", "g"), " ");
+    console.log(picname);
     let uploadResponse = await uploadToDrive(
       token,
       folderid,
@@ -121,7 +125,6 @@ export default class CameraExample extends React.Component {
         type: "success"
       }); // Toast.show("This is a toast.");
     } else {
-      this.setState({ successUpload: false });
       Toast.show({
         text: picname + " upload error",
         position: "top",
@@ -138,7 +141,9 @@ export default class CameraExample extends React.Component {
       pictureName,
       this.state.fileBase64
     );
-
+    CameraRoll.saveToCameraRoll(
+      `${FileSystem.documentDirectory}photos/${pictureName}.jpg`
+    );
     if (this.state.photoId < 7) {
       this.setState({
         photoId: this.state.photoId + 1,
@@ -146,7 +151,7 @@ export default class CameraExample extends React.Component {
         showPreview: false
       });
     } else {
-      if ((this.state.photoId = 7)) {
+      if (this.state.photoId == 7) {
         this.setState({
           photoId: this.state.photoId + 1
         });
@@ -156,25 +161,6 @@ export default class CameraExample extends React.Component {
         showPreview: false
       });
     }
-
-    //
-    // if (this.state.photoId < 7) {
-    //   if (uploadResponse.status == 200) {
-    //     Alert.alert("Success", "Photo uploaded successfully");
-    //     this.setState({
-    //       photoId: this.state.photoId + 1,
-    //       showGallery: false,
-    //       showPreview: false
-    //     });
-    //   } else {
-    //     Alert.alert("Error", "error on upload");
-    //   }
-    // } else {
-    //   this.setState({
-    //     showGallery: true,
-    //     showPreview: false
-    //   });
-    // }
   }
   morePictures() {
     this.setState({
@@ -183,6 +169,10 @@ export default class CameraExample extends React.Component {
     });
   }
   finishPictures() {
+    Expo.ScreenOrientation.allow(
+      Expo.ScreenOrientation.Orientation.PORTRAIT_UP
+    );
+
     Alert.alert(
       "Pictures uploaded",
       "pictures uploaded",
@@ -202,7 +192,11 @@ export default class CameraExample extends React.Component {
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
   }
-  repeatPicture() {
+  async repeatPicture() {
+    await FileSystem.deleteAsync(
+      `${FileSystem.documentDirectory}photos/${pictureName}.jpg`
+    );
+
     this.setState({
       showPreview: !this.state.showPreview
     });
@@ -212,6 +206,7 @@ export default class CameraExample extends React.Component {
       flash: flashModeOrder[this.state.flash]
     });
   }
+
   takePicture = async function() {
     // console.log(FileSystem.documentDirectory);
     // alert(FileSystem.documentDirectory);
@@ -220,40 +215,39 @@ export default class CameraExample extends React.Component {
         this.state.vin.slice(-6) +
         "_" +
         pictureNames[this.state.photoId] +
+        new Date().getMilliseconds() +
         extraCounter;
       extraCounter++;
     } else {
       pictureName =
-        this.state.vin.slice(-6) + "_" + pictureNames[this.state.photoId];
+        this.state.vin.slice(-6) +
+        "_" +
+        pictureNames[this.state.photoId] +
+        new Date().getMilliseconds();
     }
     console.log("picturename", pictureName);
     if (this.camera) {
       this.camera
         .takePictureAsync({
+          quality: 0.5,
           base64: true
         })
         .then(data => {
-          console.log(data);
           this.setState({ fileBase64: data.base64 });
           FileSystem.moveAsync({
             from: data.uri,
             to: `${FileSystem.documentDirectory}photos/${pictureName}.jpg`
-          })
-            .then(() => {
-              Vibration.vibrate();
-              this.setState({
-                showGallery: false,
-                showPreview: true
-              });
-            })
-            .then(() => {
-              CameraRoll.saveToCameraRoll(
-                `${FileSystem.documentDirectory}photos/${pictureName}.jpg`
-              );
+          }).then(() => {
+            Vibration.vibrate();
+            this.setState({
+              showGallery: false,
+              showPreview: true
             });
+          });
         });
     }
   };
+
   renderPreview() {
     return (
       <PhotoPreview
@@ -263,6 +257,7 @@ export default class CameraExample extends React.Component {
       />
     );
   }
+
   renderGallery() {
     return (
       <GalleryScreen
@@ -286,6 +281,7 @@ export default class CameraExample extends React.Component {
           }}
           style={{ flex: 1 }}
           type={this.state.type}
+          ratio={this.state.ratio}
           flashMode={this.state.flash}
           orientation={this.state.orientation}
         >
@@ -316,7 +312,6 @@ export default class CameraExample extends React.Component {
               alignItems: "center"
             }}
           >
-            {this.state.successUpload ? <Text>upload successful</Text> : null}
             <Button
               style={{
                 position: "absolute",
@@ -332,6 +327,7 @@ export default class CameraExample extends React.Component {
       );
     }
   }
+
   render() {
     const cameraScreenContent = this.state.showGallery
       ? this.renderGallery()

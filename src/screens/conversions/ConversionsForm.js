@@ -15,8 +15,8 @@ import {
   Right,
   Radio
 } from "native-base";
-import { appendToSheet, updateSheet } from "../../Calls";
-export default class ArbitrationUpdate extends Component {
+import { updateSheet } from "../../Calls";
+export default class ConversionsForm extends Component {
   state = {
     comment: "",
     vin: "",
@@ -25,9 +25,8 @@ export default class ArbitrationUpdate extends Component {
   };
   componentWillMount() {
     const { params } = this.props.navigation.state;
-    vin = params.scannedValue;
-
-    this.state.vin = params.scannedValue;
+    this.state.vin = params.scannedVIN;
+    this.state.scannedFaceplate = params.scannedFaceplate;
     this.state.userName = params.userName;
     this.state.location = params.address;
     this.state.latitude = params.latitude;
@@ -36,19 +35,22 @@ export default class ArbitrationUpdate extends Component {
   }
 
   buttonClick = () => {
+    //VIN	User	latitude	longitude	Address	Arbitration	Reason	Faceplate	LastUpdate
     let data = [
       this.state.vin,
       this.state.userName,
+      this.state.selectedWorkCode,
       this.state.latitude,
       this.state.longitude,
       this.state.location,
-      this.state.selectedStatus,
+      new Date(),
       this.state.note,
-      new Date()
+      this.state.scannedFaceplate,
+      this.state.selectedCompletion
     ];
     //appendToSheet(this.state.accessToken, "Conversions", data);
     //console.log(apptosht);
-    updateSheet(this.state.accessToken, "Arbitration", this.state.vin, data);
+    updateSheet(this.state.accessToken, "Conversions", this.state.vin, data);
 
     Alert.alert(
       "Conversion status updated",
@@ -70,15 +72,19 @@ export default class ArbitrationUpdate extends Component {
     ); ///UPDATE TO GOOGLE SHEETS
   };
   static navigationOptions = {
-    title: "Arbitration update",
+    title: "Conversion update",
     headerLeft: null
   };
-  onValueChangeStatus(value: string) {
+  onValueChangeWC(value: string) {
     this.setState({
-      selectedStatus: value
+      selectedWorkCode: value
     });
   }
-
+  onValueChangeCompletion(value: string) {
+    this.setState({
+      selectedCompletion: value
+    });
+  }
   render() {
     const { params } = this.props.navigation.state;
 
@@ -90,7 +96,14 @@ export default class ArbitrationUpdate extends Component {
               <Label>VIN</Label>
               <Input disabled value={vin} numberOfLines={2} />
             </Item>
-
+            <Item disabled>
+              <Label>Faceplate</Label>
+              <Input
+                disabled
+                value={this.state.scannedFaceplate}
+                numberOfLines={2}
+              />
+            </Item>
             <Item stackedLabel>
               <Label>Location</Label>
               <Input
@@ -105,21 +118,39 @@ export default class ArbitrationUpdate extends Component {
                 paddingTop: 15
               }}
             >
-              Arbitration status
+              Work code
             </Text>
             <Picker
               mode="dropdown"
-              placeholder="Arbitration status"
-              selectedValue={this.state.selectedStatus}
-              onValueChange={this.onValueChangeStatus.bind(this)}
+              placeholder="Work code"
+              selectedValue={this.state.selectedWorkCode}
+              onValueChange={this.onValueChangeWC.bind(this)}
             >
-              <Item label="PSI" value="PSI" />
-              <Item label="Arbitration" value="Arbitration" />
-              <Item label="Passed" value="Passed" />
+              <Item label="F" value="f" />
+              <Item label="R" value="r" />
+              <Item label="RF" value="rf" />
+            </Picker>
+            <Text
+              style={{
+                textAlign: "center",
+                paddingTop: 15
+              }}
+            >
+              Completion status
+            </Text>
+
+            <Picker
+              mode="dropdown"
+              placeholder="Completion status"
+              selectedValue={this.state.selectedCompletion}
+              onValueChange={this.onValueChangeCompletion.bind(this)}
+            >
+              <Item label="Completed" value="completed" />
+              <Item label="Pending" value="pending" />
             </Picker>
 
             <Item stackedLabel last>
-              <Label>Arbitration reason</Label>
+              <Label>Notes</Label>
 
               <Input
                 onChangeText={notes => this.setState({ notes })}
@@ -139,4 +170,4 @@ export default class ArbitrationUpdate extends Component {
   }
 }
 
-AppRegistry.registerComponent("ArbitrationUpdate", () => ArbitrationUpdate);
+AppRegistry.registerComponent("ConversionsForm", () => ConversionsForm);

@@ -53,10 +53,14 @@ export async function refreshToken(refToken) {
         method: "POST"
       }
     );
+    if (response.status != 200) {
+      console.log("refreshToken not 200", response);
+    }
     let tokens = JSON.parse(response._bodyInit);
     //  console.log("refreshresponse", tokens.access_token);
 
     //tokens = await JSON.parse(response._bodyInit).values;
+    //console.log("tokens.access_token", tokens.access_token);
 
     AsyncStorage.setItem("accessToken", JSON.stringify(tokens.access_token));
     return tokens.access_token;
@@ -72,7 +76,7 @@ export async function appendToSheet(accessToken, sheetName, valueArray) {
     let data = JSON.stringify({
       values: [valueArray]
     });
-    console.log(data);
+    //  console.log("appendToSheet",data);
     let response = await fetch(
       "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/" +
         sheetName +
@@ -85,6 +89,9 @@ export async function appendToSheet(accessToken, sheetName, valueArray) {
         body: data
       }
     );
+    if (response.status != 200) {
+      console.log("appendToSheet not 200", response);
+    }
     //  console.log(response);
   } catch (error) {
     console.error(error.message);
@@ -97,7 +104,7 @@ export async function updateSheet(
   searchValue,
   valueArray
 ) {
-  console.log("updatevalues", accessToken, sheetName, searchValue, valueArray);
+  //  console.log("updatevalues", accessToken, sheetName, searchValue, valueArray);
   let data = JSON.stringify({
     values: [valueArray]
   });
@@ -107,8 +114,11 @@ export async function updateSheet(
       "!A2%3AA?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
       apiKEY
   );
+  if (range.status != 200) {
+    console.log("updateSheet get array not 200", range);
+  }
   rangevalues = await JSON.parse(range._bodyInit).values;
-  console.log("rangevalues", rangevalues);
+  //console.log("rangevalues", rangevalues);
   let i = 2;
   let replaceRow = 0;
   for (let row of rangevalues) {
@@ -148,6 +158,9 @@ export async function updateSheet(
       }
     );
   }
+  if (response.status != 200) {
+    console.log("updateSheet not 200", response);
+  }
   //  console.log(response);
 }
 
@@ -160,6 +173,18 @@ export async function getUserType(userNameSearch) {
   for (let row of rangevalues) {
     console.log("rowvalue", row[0].toLowerCase());
     if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row[1];
+  }
+}
+
+export async function getUserPermissions(userNameSearch) {
+  let range = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/UserPermissions!A2%3AM50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY
+  );
+  rangevalues = JSON.parse(range._bodyInit).values;
+  for (let row of rangevalues) {
+    console.log("rowvalue", row[0].toLowerCase());
+    if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
   }
 }
 
@@ -178,6 +203,58 @@ export async function updateUserList(accessToken, newList) {
     data: [
       {
         range: "A2",
+        values: newList
+      }
+    ]
+  });
+  let response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values:batchUpdate",
+
+    {
+      method: "POST",
+      headers: { Authorization: "Bearer " + accessToken },
+      body: jsonbody
+    }
+  );
+  //  console.log(await response.json());
+}
+
+export async function getUserPermissionList() {
+  let response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/UserPermissions!A1%3AM30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY
+  );
+  responseJson = await response.json();
+  //  console.log(responseJson.values);
+  return responseJson.values;
+}
+export async function updateUserPermissionList(accessToken, newList) {
+  let jsonbody = JSON.stringify({
+    valueInputOption: "USER_ENTERED",
+    data: [
+      {
+        range: "UserPermissions!A2",
+        values: newList
+      }
+    ]
+  });
+  let response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values:batchUpdate",
+
+    {
+      method: "POST",
+      headers: { Authorization: "Bearer " + accessToken },
+      body: jsonbody
+    }
+  );
+  //  console.log(await response.json());
+}
+export async function updateUserPermissions(accessToken, row, newList) {
+  let jsonbody = JSON.stringify({
+    valueInputOption: "USER_ENTERED",
+    data: [
+      {
+        range: "UserPermissions!C" + row,
         values: newList
       }
     ]
@@ -218,7 +295,6 @@ export async function getVehicleInfo(vinSearch) {
     }
     rowNum++;
   }
-  alert("not found");
 }
 export async function getDriveFolderContents(accessToken, folderId) {
   let response = await fetch(
@@ -231,7 +307,9 @@ export async function getDriveFolderContents(accessToken, folderId) {
       }
     }
   );
-  console.log("getDriveFolderContents", response);
+  if (response.status != 200) {
+    console.log("getDriveFolderContents not 200", response);
+  }
 }
 export async function uploadToDrive(
   accessToken,
@@ -271,9 +349,9 @@ export async function uploadToDrive(
       }
     );
     //  console.log(response);
-    // if (response.status == 200) {
-    //   alert("Picture uploaded successfully");
-    // }
+    if (response.status != 200) {
+      console.log(response);
+    }
     // let id = JSON.parse(response._bodyInit).id;
     return response;
     //  console.log(response);
@@ -285,6 +363,8 @@ export async function uploadToDrive(
 
 export async function createDriveFolder(accessToken, folderName) {
   try {
+    folderName = folderName.replace(new RegExp("_", "g"), " ");
+
     let data = JSON.stringify({
       name: folderName,
       parents: ["1vQaSR0uXA7u9nekzixaDzwRZukBZ_uFO"],
@@ -304,7 +384,13 @@ export async function createDriveFolder(accessToken, folderName) {
         body: data
       }
     );
-    let id = await JSON.parse(response._bodyInit).id;
+    let responseJson = await response.json();
+    let id = responseJson.id;
+    if (response.status != 200) {
+      console.log("idresponse.json", response);
+    }
+    //  console.log("createdrivefolderresponses", response);
+    //    let id = await JSON.parse(response._bodyInit).id;
     //  console.log(id);
     return id;
     //  console.log(response);

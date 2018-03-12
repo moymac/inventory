@@ -83,7 +83,7 @@ export default class UserAdministration extends Component {
                     <Item label="Not allowed" value="0" />
                     <Item label="Driver" value="1" />
                     <Item label="Sales" value="2" />
-                    <Item label="Inventory" value="3" />
+                    <Item label="Conversions" value="3" />
                     <Item label="Pictures" value="5" />
                     <Item label="Administrator" value="4" />
                   </Picker>

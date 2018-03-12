@@ -6,7 +6,15 @@ import {
   View,
   TouchableOpacity
 } from "react-native";
-import { Container, Content, Text, Title, Badge, Button } from "native-base";
+import {
+  Container,
+  Content,
+  Text,
+  Title,
+  Badge,
+  Button,
+  Icon
+} from "native-base";
 import { WebBrowser } from "expo";
 convertToCurrency = value => {
   return (
@@ -43,8 +51,11 @@ export default class Tab5 extends Component {
             </Text>
           </View>
           <TouchableOpacity onPress={this.showBOS}>
-            <View>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
               <Text style={styles.text}>Bill of Sale</Text>
+              <Icon name="arrow-forward" />
             </View>
           </TouchableOpacity>
           <View>

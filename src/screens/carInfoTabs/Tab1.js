@@ -1,6 +1,12 @@
 import React, { Component } from "react";
-import { AppRegistry, Platform, StyleSheet, View } from "react-native";
-import { Container, Content, Text, Title, Badge } from "native-base";
+import {
+  AppRegistry,
+  Platform,
+  StyleSheet,
+  View,
+  TouchableOpacity
+} from "react-native";
+import { Container, Content, Text, Title, Badge, Icon } from "native-base";
 
 export default class Tab1 extends Component {
   render() {
@@ -28,6 +34,43 @@ export default class Tab1 extends Component {
             <Text>Comments</Text>
             <Text style={styles.text}>{this.props.basicInfo.comments}</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => {
+              marker = {
+                title: this.props.basicInfo.model,
+                description: this.props.basicInfo.trimLevel,
+                pinColor: this.props.basicInfo.color,
+                coordinate: {
+                  latitude: Number(
+                    this.props.basicInfo.lastLocationLatLong.split(",")[0]
+                  ),
+                  longitude: Number(
+                    this.props.basicInfo.lastLocationLatLong.split(",")[1]
+                  )
+                }
+              };
+
+              this.props.navigation.navigate("Map", {
+                initialLat: Number(
+                  this.props.basicInfo.lastLocationLatLong.split(",")[0]
+                ),
+                initialLon: Number(
+                  this.props.basicInfo.lastLocationLatLong.split(",")[1]
+                ),
+                markers: [marker]
+              });
+            }}
+          >
+            <Text>Last location</Text>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <Text style={styles.text}>
+                {this.props.basicInfo.lastLocationAddress}
+              </Text>
+              <Icon name="arrow-forward" />
+            </View>
+          </TouchableOpacity>
         </View>
       </Container>
     );

@@ -13,18 +13,22 @@ import { Root } from "native-base";
 
 import { StackNavigator } from "react-navigation";
 import HomeScreen from "./src/home";
-import BarcodeScanner from "./src/BarcodeScanner";
-import WelcomeScreen from "./src/screens/WelcomeScreen";
-import UserSelection from "./src/screens/UserSelection";
+import BarcodeScanner from "./src/BarcodeScannerNEW";
+import WelcomeScreen from "./src/screens/WelcomeScreenNEW";
+import UserSelection from "./src/screens/UserSelectionNEW";
 import IssueUpdate from "./src/screens/driver/IssueUpdate";
 import LocationUpdate from "./src/screens/driver/LocationUpdate";
 import PictureUpload from "./src/screens/driver/PictureUpload";
 import ArbitrationUpdate from "./src/screens/sales/ArbitrationUpdate";
 import ConversionsMain from "./src/screens/conversions/ConversionsMain";
+import ConversionsForm from "./src/screens/conversions/ConversionsForm";
 import VehicleInfo from "./src/screens/VehicleInfo";
 import GoogleLogin from "./src/screens/GoogleLogin";
-import UserAdministration from "./src/screens/UserAdministration";
-
+import UserAdministration from "./src/screens/UserAdministrationNEW";
+import OneUser from "./src/screens/OneUser";
+import Map from "./src/screens/Map";
+import InventoryList from "./src/screens/InventoryList";
+import PartsInventory from "./src/screens/PartsInventory";
 //
 //
 // const instructions = Platform.select({
@@ -45,8 +49,13 @@ const AppInventory = StackNavigator(
     PictureUpload: { screen: PictureUpload },
     ArbitrationUpdate: { screen: ArbitrationUpdate },
     ConversionsMain: { screen: ConversionsMain },
+    ConversionsForm: { screen: ConversionsForm },
     VehicleInfo: { screen: VehicleInfo },
-    UserAdministration: { screen: UserAdministration }
+    UserAdministration: { screen: UserAdministration },
+    OneUser: { screen: OneUser },
+    Map: { screen: Map },
+    InventoryList: { screen: InventoryList },
+    PartsInventory: { screen: PartsInventory }
   },
   {
     navigationOptions: {
