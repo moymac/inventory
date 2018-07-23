@@ -9,14 +9,11 @@ import {
   Label,
   Form,
   Text,
-  Button,
-  Picker,
-  ListItem,
-  Right,
-  Radio
+  Icon,
+  Button
 } from "native-base";
 import { appendToSheet, updateSheet } from "../../Calls";
-export default class ArbitrationUpdate extends Component {
+export default class CleanupComplete extends Component {
   state = {
     comment: "",
     vin: "",
@@ -26,7 +23,6 @@ export default class ArbitrationUpdate extends Component {
   componentWillMount() {
     const { params } = this.props.navigation.state;
     vin = params.scannedValue;
-
     this.state.vin = params.scannedValue;
     this.state.userName = params.userName;
     this.state.location = params.address;
@@ -36,28 +32,25 @@ export default class ArbitrationUpdate extends Component {
   }
 
   buttonClick = () => {
+    //VIN	User	latitude	longitude	Address	Arbitration	Reason	Faceplate	LastUpdate
     let data = [
       this.state.vin,
       this.state.userName,
       this.state.latitude,
       this.state.longitude,
       this.state.location,
-      this.state.selectedStatus,
-      this.state.note,
+      this.state.comment,
+      "",
+      "",
+      "",
       new Date()
     ];
-    //appendToSheet(this.state.accessToken, "Conversions", data);
+    appendToSheet(this.state.accessToken, "AllScans", data);
     //console.log(apptosht);
-    updateSheet(
-      this.state.accessToken,
-      "barcode",
-      "Arbitration",
-      this.state.vin,
-      data
-    );
+    appendToSheet(this.state.accessToken, "CleanupComplete", data);
 
     Alert.alert(
-      "Conversion status updated",
+      "Updated!",
       vin,
       [
         {
@@ -75,16 +68,14 @@ export default class ArbitrationUpdate extends Component {
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
   };
-  static navigationOptions = {
-    title: "Arbitration update",
-    headerLeft: null
-  };
-  onValueChangeStatus(value: string) {
-    this.setState({
-      selectedStatus: value
-    });
-  }
-
+  static navigationOptions = ({ navigation }) => ({
+    title: "CleanupComplete",
+    headerLeft: (
+      <Button transparent small onPress={() => navigation.goBack()}>
+        <Icon name="log-out" />
+      </Button>
+    )
+  });
   render() {
     const { params } = this.props.navigation.state;
 
@@ -96,7 +87,6 @@ export default class ArbitrationUpdate extends Component {
               <Label>VIN</Label>
               <Input disabled value={vin} numberOfLines={2} />
             </Item>
-
             <Item stackedLabel>
               <Label>Location</Label>
               <Input
@@ -105,30 +95,12 @@ export default class ArbitrationUpdate extends Component {
                 value={this.state.location}
               />
             </Item>
-            <Text
-              style={{
-                textAlign: "center",
-                paddingTop: 15
-              }}
-            >
-              Arbitration status
-            </Text>
-            <Picker
-              mode="dropdown"
-              placeholder="Arbitration status"
-              selectedValue={this.state.selectedStatus}
-              onValueChange={this.onValueChangeStatus.bind(this)}
-            >
-              <Item label="PSI" value="PSI" />
-              <Item label="Arbitration" value="Arbitration" />
-              <Item label="Passed" value="Passed" />
-            </Picker>
 
             <Item stackedLabel last>
-              <Label>Arbitration reason</Label>
+              <Label>Comment</Label>
 
               <Input
-                onChangeText={notes => this.setState({ notes })}
+                onChangeText={comment => this.setState({ comment })}
                 multiline={true}
                 numberOfLines={10}
                 style={{ height: 100 }}
@@ -145,4 +117,4 @@ export default class ArbitrationUpdate extends Component {
   }
 }
 
-AppRegistry.registerComponent("ArbitrationUpdate", () => ArbitrationUpdate);
+AppRegistry.registerComponent("CleanupComplete", () => CleanupComplete);

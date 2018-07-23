@@ -1,5 +1,6 @@
 const mainURL = "";
-const apiKEY = "AIzaSyB_e7LpjDy5Nopf3DRrs1endVkQJ3lTCv4";
+// const apiKEY = "AIzaSyB_e7LpjDy5Nopf3DRrs1endVkQJ3lTCv4";
+const apiKEY = "AIzaSyAN-mJR-d6rmF4h8VNgndC1-6XGS1pH9Mk";
 const apiDriveKEY = "AIzaSyAy9VVXHSpS2IJpptzYtGbLP3-3_l0aBk4";
 const clientSecret = "81uIUeVHTS0SHgalp39kA6Cf";
 const url = "https://www.googleapis.com/drive/v3";
@@ -10,6 +11,9 @@ const iosClientId =
   "544692012409-8cafh0jufk41bf4a10ht39fe4qrg6app.apps.googleusercontent.com";
 import { Alert, AsyncStorage, Platform } from "react-native";
 import Expo from "expo";
+
+const barcodeID = "1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU";
+const reconID = "1c1FRKFhlixxteuGC1SiWbD30BMiNOOwAHn3Im-0uGJk";
 
 export async function signInWithGoogleAsync() {
   try {
@@ -24,17 +28,23 @@ export async function signInWithGoogleAsync() {
         "https://www.googleapis.com/auth/spreadsheets"
       ]
     });
-    console.log("fetchresult", result);
+    //  console.log("fetchresult", result);
     if (result.type === "success") {
       //AsyncStorage.setItem("accessToken", JSON.stringify(token));
-      console.log("signtoken", result.accessToken);
+      //    console.log("signtoken", result.accessToken);
       return result.accessToken;
     } else {
       return { cancelled: true };
     }
   } catch (e) {
+    console.log(e);
     return { error: true };
   }
+}
+
+export async function getLatestAccessToken() {
+  let data = await AsyncStorage.getItem("accessToken");
+  return await JSON.parse(data);
 }
 export async function refreshToken(refToken) {
   try {
@@ -56,6 +66,7 @@ export async function refreshToken(refToken) {
     if (response.status != 200) {
       console.log("refreshToken not 200", response);
     }
+
     let tokens = JSON.parse(response._bodyInit);
     //  console.log("refreshresponse", tokens.access_token);
 
@@ -63,6 +74,7 @@ export async function refreshToken(refToken) {
     //console.log("tokens.access_token", tokens.access_token);
 
     AsyncStorage.setItem("accessToken", JSON.stringify(tokens.access_token));
+    console.log("accessToken refreshed and stored", tokens.access_token);
     return tokens.access_token;
   } catch (error) {
     console.error(error.message);
@@ -78,7 +90,9 @@ export async function appendToSheet(accessToken, sheetName, valueArray) {
     });
     //  console.log("appendToSheet",data);
     let response = await fetch(
-      "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/" +
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+        barcodeID +
+        "/values/" +
         sheetName +
         "!A2:append?includeValuesInResponse=false&insertDataOption=INSERT_ROWS&valueInputOption=RAW&key=" +
         apiKEY,
@@ -97,101 +111,199 @@ export async function appendToSheet(accessToken, sheetName, valueArray) {
     console.error(error.message);
   }
 }
+//////////BUILD A CALL TO UPDATE THE PICKED UP STATUS
+
+export async function updatePurchaseListPU(accessToken, row, pickedUp) {
+  let data = JSON.stringify({
+    values: [[pickedUp]]
+  });
+  response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values/" +
+      "AdesaPurchaseList" +
+      "!AL" +
+      row +
+      "?includeValuesInResponse=true&valueInputOption=RAW&fields=updatedRows&key=" +
+      apiKEY,
+
+    {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + accessToken },
+      body: data
+    }
+  );
+  if (response.status != 200) {
+    console.log("updateSheet get array not 200", response);
+  } else {
+    return true;
+  }
+}
 
 export async function updateSheet(
   accessToken,
+  workBook,
   sheetName,
   searchValue,
   valueArray
 ) {
+  let sheetKey = barcodeID;
+  switch (workBook) {
+    case "recon":
+      sheetKey = reconID;
+      break;
+    default:
+      sheetKey = barcodeID;
+  }
+
   //  console.log("updatevalues", accessToken, sheetName, searchValue, valueArray);
   let data = JSON.stringify({
     values: [valueArray]
   });
-  let range = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/" +
-      sheetName +
-      "!A2%3AA?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
-  );
-  if (range.status != 200) {
-    console.log("updateSheet get array not 200", range);
-  }
-  rangevalues = await JSON.parse(range._bodyInit).values;
-  //console.log("rangevalues", rangevalues);
-  let i = 2;
-  let replaceRow = 0;
-  for (let row of rangevalues) {
-    let response;
-    //  console.log("foundupdateRow", row[0].toLowerCase());
-    if (row[0].toLowerCase() == searchValue.toLowerCase()) {
-      replaceRow = i;
+  try {
+    let range = await fetch(
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+        sheetKey +
+        "/values/" +
+        sheetName +
+        "!A2%3AA?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+        apiKEY,
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+
+    if (range.status != 200) {
+      console.log("updateSheet get array not 200", range);
     }
-    i++;
-  }
-  if (replaceRow != 0) {
-    response = await fetch(
-      "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/" +
-        sheetName +
-        "!A" +
-        replaceRow +
-        "?includeValuesInResponse=true&valueInputOption=RAW&fields=updatedRows&key=" +
-        apiKEY,
+    rangevalues = await JSON.parse(range._bodyInit).values;
+    let i = 2;
+    let replaceRow = 0;
+    let response;
 
-      {
-        method: "PUT",
-        headers: { Authorization: "Bearer " + accessToken },
-        body: data
+    for (let row of rangevalues) {
+      //  console.log("foundupdateRow", row[0].toLowerCase());
+      if (row[0].toLowerCase() == searchValue.toLowerCase()) {
+        replaceRow = i;
       }
-    );
-  } else {
-    response = await fetch(
-      "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/" +
-        sheetName +
-        "!A2:append?includeValuesInResponse=false&insertDataOption=INSERT_ROWS&valueInputOption=RAW&key=" +
-        apiKEY,
+      i++;
+    }
+    if (replaceRow != 0) {
+      response = await fetch(
+        "https://sheets.googleapis.com/v4/spreadsheets/" +
+          sheetKey +
+          "/values/" +
+          sheetName +
+          "!A" +
+          replaceRow +
+          "?includeValuesInResponse=true&valueInputOption=RAW&fields=updatedRows&key=" +
+          apiKEY,
 
-      {
-        method: "POST",
-        headers: { Authorization: "Bearer " + accessToken },
-        body: data
-      }
-    );
-  }
-  if (response.status != 200) {
-    console.log("updateSheet not 200", response);
+        {
+          method: "PUT",
+          headers: { Authorization: "Bearer " + accessToken },
+          body: data
+        }
+      );
+    } else {
+      response = await fetch(
+        "https://sheets.googleapis.com/v4/spreadsheets/" +
+          sheetKey +
+          "/values/" +
+          sheetName +
+          "!A2:append?includeValuesInResponse=false&insertDataOption=INSERT_ROWS&valueInputOption=RAW&key=" +
+          apiKEY,
+
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer " + accessToken },
+          body: data
+        }
+      );
+    }
+    if (response.status != 200) {
+      console.log("updateSheet not 200", response);
+    }
+  } catch (e) {
+    console.log(e);
   }
   //  console.log(response);
 }
 
 export async function getUserType(userNameSearch) {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
   let range = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/Users!A2%3AB30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values/Users!A2%3AB30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY,
+    {
+      method: "GET",
+      headers: { Authorization: "Bearer " + accessToken }
+    }
   );
   rangevalues = JSON.parse(range._bodyInit).values;
   for (let row of rangevalues) {
-    console.log("rowvalue", row[0].toLowerCase());
+    //    console.log("rowvalue", row[0].toLowerCase());
     if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row[1];
   }
 }
 
 export async function getUserPermissions(userNameSearch) {
-  let range = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/UserPermissions!A2%3AM50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
-  );
-  rangevalues = JSON.parse(range._bodyInit).values;
-  for (let row of rangevalues) {
-    console.log("rowvalue", row[0].toLowerCase());
-    if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+  try {
+    let range = await fetch(
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+        barcodeID +
+        "/values/UserPermissions!A2%3AU50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+        apiKEY,
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+    rangevalues = JSON.parse(range._bodyInit).values;
+    for (let row of rangevalues) {
+      //  console.log("rowvalue", row[0].toLowerCase());
+      if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
+    }
+  } catch (e) {
+    console.log(e);
   }
 }
+//
+// export async function getUserPermissions(userNameSearch) {
+//   let range = await fetch(
+//     "https://sheets.googleapis.com/v4/spreadsheets/" +
+//       barcodeID +
+//       "/values/UserPermissions!A2%3AU50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+//       apiKEY
+//   );
+//   console.log(range);
+//   rangevalues = JSON.parse(range._bodyInit).values;
+//   for (let row of rangevalues) {
+//     //  console.log("rowvalue", row[0].toLowerCase());
+//     if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
+//   }
+// }
 
 export async function getUserList() {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
   let response = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/Users!A2%3AB30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values/Users!A2%3AB30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY,
+    {
+      method: "GET",
+      headers: { Authorization: "Bearer " + accessToken }
+    }
   );
   responseJson = await response.json();
   //  console.log(responseJson.values);
@@ -208,7 +320,9 @@ export async function updateUserList(accessToken, newList) {
     ]
   });
   let response = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values:batchUpdate",
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values:batchUpdate",
 
     {
       method: "POST",
@@ -220,9 +334,18 @@ export async function updateUserList(accessToken, newList) {
 }
 
 export async function getUserPermissionList() {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
   let response = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/UserPermissions!A1%3AM30?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values/UserPermissions!A1%3AU50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY,
+    {
+      method: "GET",
+      headers: { Authorization: "Bearer " + accessToken }
+    }
   );
   responseJson = await response.json();
   //  console.log(responseJson.values);
@@ -239,7 +362,9 @@ export async function updateUserPermissionList(accessToken, newList) {
     ]
   });
   let response = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values:batchUpdate",
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values:batchUpdate",
 
     {
       method: "POST",
@@ -247,7 +372,12 @@ export async function updateUserPermissionList(accessToken, newList) {
       body: jsonbody
     }
   );
-  //  console.log(await response.json());
+  if (response.status != 200) {
+    console.log("updateUserPermissionList not 200", response);
+  } else {
+    console.log("permission update successful");
+    return true;
+  }
 }
 export async function updateUserPermissions(accessToken, row, newList) {
   let jsonbody = JSON.stringify({
@@ -260,7 +390,9 @@ export async function updateUserPermissions(accessToken, row, newList) {
     ]
   });
   let response = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values:batchUpdate",
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values:batchUpdate",
 
     {
       method: "POST",
@@ -268,13 +400,53 @@ export async function updateUserPermissions(accessToken, row, newList) {
       body: jsonbody
     }
   );
-  console.log(await response.json());
+  if (response.status != 200) {
+    console.log("updateUserPermissionList not 200", response);
+  } else {
+    console.log("permission update successful");
+    return true;
+  }
+}
+
+export async function getVehicleSaleDate(VIN) {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
+  try {
+    let range = await fetch(
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+        barcodeID +
+        "/values/ReconVehicleImport!A1%3AH?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+        apiKEY,
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+    rangevalues = JSON.parse(range._bodyInit).values;
+    for (let row of rangevalues) {
+      //    console.log("rowvalue", row[0].toLowerCase());
+      if (row[0] != undefined && row[0].toLowerCase() == VIN.toLowerCase())
+        return row[7];
+    }
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 export async function getVehicleInfo(vinSearch) {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
   let range = await fetch(
-    "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/VehicleDetails!D1%3AD?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-      apiKEY
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      barcodeID +
+      "/values/VehicleDetails!D1%3AD?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+      apiKEY,
+    {
+      method: "GET",
+      headers: { Authorization: "Bearer " + accessToken }
+    }
   );
   rangevalues = JSON.parse(range._bodyInit).values;
   let rowNum = 1;
@@ -283,12 +455,18 @@ export async function getVehicleInfo(vinSearch) {
     //  console.log("vinmatch", row);
     if (row[0].toLowerCase() == vinSearch.toLowerCase()) {
       vehicleInformation = await fetch(
-        "https://sheets.googleapis.com/v4/spreadsheets/1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU/values/VehicleDetails!A" +
+        "https://sheets.googleapis.com/v4/spreadsheets/" +
+          barcodeID +
+          "/values/VehicleDetails!A" +
           rowNum +
           "%3AAX" +
           rowNum +
           "?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-          apiKEY
+          apiKEY,
+        {
+          method: "GET",
+          headers: { Authorization: "Bearer " + accessToken }
+        }
       );
       //console.log("vehicleinformation", vehicleInformation);
       return vehicleInformation.json();
@@ -350,7 +528,7 @@ export async function uploadToDrive(
     );
     //  console.log(response);
     if (response.status != 200) {
-      console.log(response);
+      console.log("uploadToDrive not 200", response);
     }
     // let id = JSON.parse(response._bodyInit).id;
     return response;
@@ -384,11 +562,13 @@ export async function createDriveFolder(accessToken, folderName) {
         body: data
       }
     );
+    if (response.status != 200) {
+      console.log("createDriveFolder response not 200", response);
+      return null;
+    }
     let responseJson = await response.json();
     let id = responseJson.id;
-    if (response.status != 200) {
-      console.log("idresponse.json", response);
-    }
+
     //  console.log("createdrivefolderresponses", response);
     //    let id = await JSON.parse(response._bodyInit).id;
     //  console.log(id);
@@ -396,5 +576,47 @@ export async function createDriveFolder(accessToken, folderName) {
     //  console.log(response);
   } catch (error) {
     console.log(error.message);
+    return null;
+  }
+}
+
+export async function createDrivePAFolder(accessToken, folderName) {
+  try {
+    folderName = folderName.replace(new RegExp("_", "g"), " ");
+
+    let data = JSON.stringify({
+      name: folderName,
+      parents: ["1PjEapn4iFn9xKmkZRyOCH7z-tqh3Nc24"],
+      mimeType: "application/vnd.google-apps.folder"
+    });
+    //  console.log("createfolder", data, accessToken);
+    let response = await fetch(
+      "https://www.googleapis.com/drive/v3/files",
+
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json; charset=UTF-8"
+        },
+
+        body: data
+      }
+    );
+    if (response.status != 200) {
+      console.log("createDriveFolder response not 200", response);
+      return null;
+    }
+    let responseJson = await response.json();
+    let id = responseJson.id;
+
+    //  console.log("createdrivefolderresponses", response);
+    //    let id = await JSON.parse(response._bodyInit).id;
+    //  console.log(id);
+    return id;
+    //  console.log(response);
+  } catch (error) {
+    console.log(error.message);
+    return null;
   }
 }

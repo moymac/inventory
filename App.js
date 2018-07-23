@@ -7,7 +7,14 @@ NEWEST FILE
  * @flow
  */
 import React, { Component } from "react";
-import { AppRegistry, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  AsyncStorage,
+  AppRegistry,
+  Platform,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 
 import { Root } from "native-base";
 
@@ -29,6 +36,14 @@ import OneUser from "./src/screens/OneUser";
 import Map from "./src/screens/Map";
 import InventoryList from "./src/screens/InventoryList";
 import PartsInventory from "./src/screens/PartsInventory";
+import GatePass from "./src/screens/driver/GatePass";
+import BodyshopDelivery from "./src/screens/pennsylvania/BodyshopDelivery";
+import AuctionDelivery from "./src/screens/pennsylvania/AuctionDelivery";
+import PennsylvaniaArrival from "./src/screens/pennsylvania/PennsylvaniaArrival";
+import PennsylvaniaPictures from "./src/screens/pennsylvania/PennsylvaniaPictures";
+import { refreshToken } from "./src/Calls";
+import RecallPickup from "./src/screens/pennsylvania/RecallPickup";
+
 //
 //
 // const instructions = Platform.select({
@@ -55,7 +70,13 @@ const AppInventory = StackNavigator(
     OneUser: { screen: OneUser },
     Map: { screen: Map },
     InventoryList: { screen: InventoryList },
-    PartsInventory: { screen: PartsInventory }
+    PartsInventory: { screen: PartsInventory },
+    GatePass: { screen: GatePass },
+    BodyshopDelivery: { screen: BodyshopDelivery },
+    AuctionDelivery: { screen: AuctionDelivery },
+    PennsylvaniaArrival: { screen: PennsylvaniaArrival },
+    PennsylvaniaPictures: { screen: PennsylvaniaPictures },
+    RecallPickup: { screen: RecallPickup }
   },
   {
     navigationOptions: {
@@ -64,12 +85,36 @@ const AppInventory = StackNavigator(
   }
 );
 
+export default class App extends Component {
+  async componentDidMount() {
+    let storageItem = await AsyncStorage.getItem("refreshToken");
+    const rfrshToken = JSON.parse(storageItem);
+    refreshToken(rfrshToken);
+    this.timer = setInterval(
+      () => this.refreshAccessToken(rfrshToken),
+      1700000
+    );
+  }
+
+  async refreshAccessToken(rfrshToken) {
+    refreshToken(rfrshToken);
+  }
+
+  render() {
+    return (
+      <Root>
+        <AppInventory />
+      </Root>
+    );
+  }
+}
+
 //export default AppInventory;
-export default () => (
-  <Root>
-    <AppInventory />
-  </Root>
-);
+// export default () => (
+//   <Root>
+//     <AppInventory />
+//   </Root>
+// );
 
 // export default class App extends Component<{}> {
 //   render() {

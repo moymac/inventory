@@ -32,7 +32,7 @@ import { BarCodeScanner, Permissions } from "expo";
 import SideBar from "./SideBar";
 
 import { NavigationActions } from "react-navigation";
-import { refreshToken } from "./Calls";
+import { getLatestAccessToken } from "./Calls";
 const COMMON = [
   "Update location",
   "Issue update",
@@ -101,10 +101,6 @@ export default class BarcodeScanner extends Component {
         )
           .then(response => response.json())
           .then(responseJson => {
-            // console.log(
-            //   "ADDRESS GEOCODE is BACK!! => " +
-            //     JSON.stringify(responseJson.results[0].formatted_address)
-            // );
             this.setState({
               address: JSON.stringify(responseJson.results[0].formatted_address)
             });
@@ -170,7 +166,7 @@ export default class BarcodeScanner extends Component {
     //    this.setState({ shouldRender: false });
     //
     this.props.navigation.navigate("UserAdministration", {
-      accessToken: await refreshToken(this.state.refreshToken)
+      accessToken: await getLatestAccessToken()
     });
   };
   closeDrawer = () => {
@@ -180,16 +176,13 @@ export default class BarcodeScanner extends Component {
     this.drawer._root.open();
   };
   buttonClick = async () => {
-    //  console.log('message');
-    //  alert(this.state.username);
-    //    AsyncStorage.setItem("userName", JSON.stringify(this.state.username));
     userType = this.state.userType;
     scannedValue = this.state.barcode;
     if (scannedValue.length < 3) {
       this.setState({ inputerror: true });
     } else {
       this.setState({ shouldRender: false });
-      let newAccessToken = await refreshToken(this.state.refreshToken);
+      let newAccessToken = await getLatestAccessToken();
 
       //alert(this.state.barcode);
       //  console.log(userType);
@@ -395,7 +388,7 @@ export default class BarcodeScanner extends Component {
     }
   };
   _handleBarCodeRead = ({ type, data }) => {
-    Vibration.vibrate(300);
+    // Vibration.vibrate(300);
     this.setState({ barcode: data });
   };
   render() {

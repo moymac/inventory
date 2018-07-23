@@ -9,30 +9,50 @@ import {
   Label,
   Form,
   Text,
-  Icon,
-  Button
+  ListItem,
+  Body,
+  CheckBox,
+  Button,
+  Title
 } from "native-base";
-import { appendToSheet, updateSheet } from "../../Calls";
-export default class LocationUpdate extends Component {
-  state = {
-    comment: "",
-    vin: "",
-    location: "",
-    accessToken: ""
-  };
-  componentWillMount() {
-    const { params } = this.props.navigation.state;
-    vin = params.scannedValue;
-    this.state.vin = params.scannedValue;
-    this.state.userName = params.userName;
-    this.state.location = params.address;
-    this.state.latitude = params.latitude;
-    this.state.longitude = params.longitude;
-    this.state.accessToken = params.accessToken;
+import { appendToSheet, updateSheet, getVehicleSaleDate } from "../../Calls";
+import { CalendarList } from "react-native-calendars";
+import PopupDialog, {
+  SlideAnimation,
+  DialogButton,
+  DialogTitle
+} from "react-native-popup-dialog";
+
+export default class PennsylvaniaArrival extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      comment: "",
+      vin: "",
+      location: "",
+      accessToken: "",
+      saleDate: "no data"
+    };
   }
+  componentWillMount = async () => {
+    const { params } = this.props.navigation.state;
+    const saleDate = await getVehicleSaleDate(params.scannedValue);
+
+    this.setState({
+      vin: params.scannedValue,
+      userName: params.userName,
+      location: params.address,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      accessToken: params.accessToken,
+      saleDate
+    });
+  };
 
   buttonClick = () => {
     //VIN	User	latitude	longitude	Address	Arbitration	Reason	Faceplate	LastUpdate
+
     let data = [
       this.state.vin,
       this.state.userName,
@@ -43,21 +63,22 @@ export default class LocationUpdate extends Component {
       "",
       "",
       "",
-      new Date()
+      new Date().toLocaleString("en-CA")
     ];
     appendToSheet(this.state.accessToken, "AllScans", data);
     //console.log(apptosht);
-    updateSheet(
-      this.state.accessToken,
-      "barcode",
-      "VehicleLocations",
-      this.state.vin,
-      data
-    );
+    // updateSheet(
+    //   this.state.accessToken,
+    //   "barcode",
+    //   "AtPennsylvania",
+    //   this.state.vin,
+    //   data
+    // );
+    appendToSheet(this.state.accessToken, "AtAuction", data);
 
     Alert.alert(
-      "Location updated",
-      vin,
+      "Auction drop-off",
+      this.state.vin,
       [
         {
           text: "Scan other vehicle",
@@ -67,28 +88,27 @@ export default class LocationUpdate extends Component {
           text: "Get vehicle data",
           onPress: () =>
             this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: vin
+              scannedValue: this.state.vin
             })
         }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
   };
-  static navigationOptions = ({ navigation }) => ({
+  static navigationOptions = {
     title: "Location update",
-    headerLeft: (
-      <Button transparent small onPress={() => navigation.goBack()}>
-        <Icon name="log-out" />
-      </Button>
-    )
-  });
+    headerLeft: null
+  };
   render() {
     const { params } = this.props.navigation.state;
-
+    const { needsWork, vin, saleDate } = this.state;
     return (
       <Container>
         <Content>
           <Form>
+            <Title style={{ fontSize: 30, color: "red" }}>SALE DATE</Title>
+            <Title style={{ fontSize: 30, color: "red" }}>{saleDate}</Title>
+
             <Item disabled>
               <Label>VIN</Label>
               <Input disabled value={vin} numberOfLines={2} />

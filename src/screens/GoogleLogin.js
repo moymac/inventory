@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { AppRegistry, Platform, StyleSheet, Text, View } from "react-native";
-import { Button } from "native-base";
+import { AppRegistry, Platform, StyleSheet, View } from "react-native";
+import { Text, Button } from "native-base";
 
 export default class GoogleLogin extends Component {
   static navigationOptions = {
@@ -30,7 +30,7 @@ export default class GoogleLogin extends Component {
           "544692012409-8cafh0jufk41bf4a10ht39fe4qrg6app.apps.googleusercontent.com",
         scopes: ["profile", "email"]
       });
-      console.log(result.user.name);
+      // console.log(result.user.name);
 
       if (result.type === "success") {
         AsyncStorage.setItem("userName", JSON.stringify(result.user.name));
@@ -42,6 +42,7 @@ export default class GoogleLogin extends Component {
         return { cancelled: true };
       }
     } catch (e) {
+      console.log(e);
       return { error: true };
     }
   }

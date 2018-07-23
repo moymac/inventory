@@ -4,11 +4,14 @@ import {
   Platform,
   StyleSheet,
   View,
-  Vibration,
   Keyboard,
   AsyncStorage,
   BackHandler,
-  KeyboardAvoidingView
+  Slider,
+  StatusBar,
+  KeyboardAvoidingView,
+  Dimensions,
+  TouchableHighlight
 } from "react-native";
 import {
   Text,
@@ -31,7 +34,7 @@ import {
 import { BarCodeScanner, Permissions } from "expo";
 import SideBar from "./SideBar";
 
-import { refreshToken } from "./Calls";
+import { getLatestAccessToken } from "./Calls";
 const COMMON = [
   "Update location",
   "Issue update",
@@ -40,30 +43,20 @@ const COMMON = [
 ];
 var userFunctionNames = [];
 var userFunctionScreens = [];
-const BUTTONSDRIVER = [...COMMON, "Cancel"];
-const BUTTONSSALES = [...COMMON, "Arbitration Update", "Cancel"];
-const BUTTONCONVERSIONS = ["Vehicle Info", "Conversion update", "Cancel"];
-const ALLFUNCTIONSCREENS = [
-  "VehicleInfo",
-  "InventoryList",
-  "RunList",
-  "LocationUpdate",
-  "IssueUpdate",
-  "PictureUpload",
-  "ConversionsMain",
-  "ArbitrationUpdate",
-  "PartsInventory"
-];
-const ALLFUNCTIONNAMES = [
-  "Vehicle info",
-  "Inventory list",
-  "Run list",
-  "Location update",
-  "Issue update",
-  "Picture upload",
-  "Conversion update",
-  "Arbitration update",
-  "Parts inventory"
+
+const ALLFUNCTIONS = [
+  { component: "VehicleInfo", name: "Vehicle info" },
+  { component: "RunList", name: "Run list" },
+  { component: "LocationUpdate", name: "Location update" },
+  { component: "IssueUpdate", name: "Issue update" },
+  { component: "PictureUpload", name: "Picture upload" },
+  { component: "ConversionsMain", name: "Conversion update" },
+  { component: "ArbitrationUpdate", name: "Arbitration update" },
+  { component: "PennsylvaniaPictures", name: "Pennsylvania arrival" },
+  { component: "BodyshopDelivery", name: "Repair/recall drop-off" },
+  { component: "AuctionDelivery", name: "Auction drop-off" },
+  { component: "RecallPickup", name: "Recall pick up" },
+  { component: "PennsylvaniaPictures", name: "Clusters" }
 ];
 
 export default class BarcodeScanner extends Component {
@@ -76,6 +69,8 @@ export default class BarcodeScanner extends Component {
     userName: "",
     accessToken: "",
     refreshToken: "",
+    autoFocus: "on",
+    depth: 0,
     userPermissions: []
   };
 
@@ -84,23 +79,17 @@ export default class BarcodeScanner extends Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === "granted" });
     this.setState({ shouldRender: true });
+    this.openDrawer();
   }
 
   constructor(props) {
     super(props);
-
-    setInterval(() => {
-      this.setState(previousState => {
-        return { blinking: !previousState.blinking };
-      });
-    }, 100);
   }
   handleBackButton() {
     return true;
   }
-  componentDidMount() {
-    this.setState({ shouldRender: true });
 
+  componentDidMount() {
     BackHandler.addEventListener("backPress", this.handleBackButton);
 
     this._loadInitialState().done();
@@ -124,10 +113,6 @@ export default class BarcodeScanner extends Component {
         )
           .then(response => response.json())
           .then(responseJson => {
-            // console.log(
-            //   "ADDRESS GEOCODE is BACK!! => " +
-            //     JSON.stringify(responseJson.results[0].formatted_address)
-            // );
             this.setState({
               address: JSON.stringify(responseJson.results[0].formatted_address)
             });
@@ -139,23 +124,18 @@ export default class BarcodeScanner extends Component {
   }
   _loadInitialState = async () => {
     try {
-      AsyncStorage.getItem("userPermissions").then(value => {
-        const data = JSON.parse(value);
-        this.setState({ userPermissions: data });
-        global.userPermissions = data;
-      });
-      AsyncStorage.getItem("userName").then(value => {
-        const data = JSON.parse(value);
-        this.setState({ userName: data });
-      });
-      AsyncStorage.getItem("accessToken").then(value => {
-        const data = JSON.parse(value);
-        this.setState({ accessToken: data });
-      });
-      AsyncStorage.getItem("refreshToken").then(value => {
-        const data = JSON.parse(value);
-        this.setState({ refreshToken: data });
-      });
+      let storageItem = await AsyncStorage.getItem("userPermissions");
+      const userPermissions = JSON.parse(storageItem);
+      global.userPermissions = userPermissions;
+
+      storageItem = await AsyncStorage.getItem("userName");
+      const userName = JSON.parse(storageItem);
+      storageItem = await AsyncStorage.getItem("accessToken");
+      const accessToken = JSON.parse(storageItem);
+      storageItem = await AsyncStorage.getItem("refreshToken");
+      const refreshToken = JSON.parse(storageItem);
+
+      this.setState({ userPermissions, userName, accessToken, refreshToken });
       // var userNameValue = await JSON.parse(AsyncStorage.getItem("userName"));
       // var userTypeValue = await JSON.parse(AsyncStorage.getItem("userType"));
       // global.userType = userTypeValue;
@@ -164,9 +144,8 @@ export default class BarcodeScanner extends Component {
       console.error(error);
     }
   };
-  static navigationOptions = {
+  static navigationOptions = ({ navigation }) => ({
     headerMode: "float",
-
     headerStyle: {
       backgroundColor: "rgba(0,0,0,0.1)",
       shadowOpacity: 0,
@@ -175,7 +154,8 @@ export default class BarcodeScanner extends Component {
       left: 0,
       right: 0,
       padding: 0,
-      margin: 0
+      margin: 0,
+      height: 20
     },
     //headerStyle: { backgroundColor: "transparent" },
     headerTintColor: "white",
@@ -184,20 +164,32 @@ export default class BarcodeScanner extends Component {
       alignSelf: "center",
       textAlign: "center"
     },
-    headerLeft: null
-  };
+    params: navigation.state.params,
+    headerLeft: (
+      <Button
+        transparent
+        small
+        onPress={() => navigation.navigate("WelcomeScreen")}
+      >
+        <Icon name="log-out" />
+      </Button>
+    )
+  });
   fabButton = () => {
-    this.drawer._root.open();
+    this.openDrawer();
+    // this.drawer._root.open();
   };
   buildArrays = () => {
     userFunctionNames = [];
     userFunctionScreens = [];
     let permittedElements = this.state.userPermissions;
     for (let i = 0; i < permittedElements.length; i++) {
-      if (permittedElements[i + 5] === "1") {
-        //console.log(userFunctionNames, i);
-        userFunctionNames = [...userFunctionNames, ALLFUNCTIONNAMES[i]];
-        userFunctionScreens = [...userFunctionScreens, ALLFUNCTIONSCREENS[i]];
+      if (permittedElements[i + 8] === "1") {
+        userFunctionNames = [...userFunctionNames, ALLFUNCTIONS[i].name];
+        userFunctionScreens = [
+          ...userFunctionScreens,
+          ALLFUNCTIONS[i].component
+        ];
       }
     }
     userFunctionNames = [...userFunctionNames, "Cancel"];
@@ -205,20 +197,22 @@ export default class BarcodeScanner extends Component {
   buttonAdmin = async () => {
     //    this.setState({ shouldRender: false });
     //
+
     this.props.navigation.navigate("UserAdministration", {
-      accessToken: await refreshToken(this.state.refreshToken)
+      accessToken: await getLatestAccessToken()
     });
   };
   buttonInventory = async () => {
     //    this.setState({ shouldRender: false });
     //
+
     this.props.navigation.navigate("InventoryList", {
-      accessToken: await refreshToken(this.state.refreshToken)
+      accessToken: await getLatestAccessToken()
     });
   };
   buttonParts = async () => {
-    let newAccessToken = await refreshToken(this.state.refreshToken);
-    console.log("newAccessToken", newAccessToken);
+    this.setState({ shouldRender: false });
+    let newAccessToken = await getLatestAccessToken();
     var globalParams = await {
       userType: this.state.userType,
       userName: this.state.userName,
@@ -235,11 +229,38 @@ export default class BarcodeScanner extends Component {
       ...globalParams
     });
   };
+  buttonPurchaseList = async () => {
+    this.setState({ shouldRender: false });
+    this.buildArrays();
+
+    let newAccessToken = await getLatestAccessToken();
+    //console.log("newAccessToken", newAccessToken);
+    var globalParams = await {
+      userName: this.state.userName,
+      latitude: this.state.latitude,
+      longitude: this.state.longitude,
+      address: this.state.address,
+      error: this.state.error,
+      accessToken: newAccessToken,
+      refreshToken: this.state.refreshToken,
+      userFunctionNames,
+      userFunctionScreens
+    };
+    //    this.setState({ shouldRender: false });
+    //
+    this.props.navigation.navigate("GatePass", {
+      ...globalParams
+    });
+  };
 
   closeDrawer = () => {
+    this.setState({ shouldRender: true });
+
     this.drawer._root.close();
   };
   openDrawer = () => {
+    this.setState({ shouldRender: false });
+
     this.drawer._root.open();
   };
   buttonClick = async () => {
@@ -248,33 +269,42 @@ export default class BarcodeScanner extends Component {
     //  console.log('message');
     //  alert(this.state.username);
     //    AsyncStorage.setItem("userName", JSON.stringify(this.state.username));
-    userType = this.state.userType;
+    const {
+      userType,
+      userName,
+      latitude,
+      longitude,
+      address,
+      error,
+      refreshToken
+    } = this.state;
     scannedValue = this.state.barcode;
+
     if (scannedValue.length < 3) {
       this.setState({ inputerror: true });
     } else {
       this.setState({ shouldRender: false });
-      let newAccessToken = await refreshToken(this.state.refreshToken);
-
+      let newAccessToken = await getLatestAccessToken();
       //alert(this.state.barcode);
       //  console.log(userType);
-      var globalParams = await {
-        userType: this.state.userType,
-        userName: this.state.userName,
-        scannedValue: this.state.barcode,
-        latitude: this.state.latitude,
-        longitude: this.state.longitude,
-        address: this.state.address,
-        error: this.state.error,
+      var globalParams = {
+        userType,
+        userName,
+        scannedValue,
+        latitude,
+        longitude,
+        address,
+        error,
         accessToken: newAccessToken,
-        refreshToken: this.state.refreshToken
+        refreshToken,
+        prevScreen: "BarcodeScanner"
       };
       //action: NavigationActions.navigate({ routeName: "SubProfileRoute" })
 
       ActionSheet.show(
         {
           options: userFunctionNames,
-          cancelButtonIndex: userFunctionNames.length + 1,
+          cancelButtonIndex: userFunctionNames.length,
           title: scannedValue
         },
         buttonIndex => {
@@ -283,7 +313,8 @@ export default class BarcodeScanner extends Component {
             this.setState({ shouldRender: true });
           } else {
             this.props.navigation.navigate(userFunctionScreens[buttonIndex], {
-              ...globalParams
+              ...globalParams,
+              selection: userFunctionNames[buttonIndex]
             });
           }
         }
@@ -291,114 +322,182 @@ export default class BarcodeScanner extends Component {
     }
   };
   _handleBarCodeRead = ({ type, data }) => {
-    Vibration.vibrate(300);
     this.setState({ barcode: data });
+  };
+  handleKeyDown = e => {
+    if (e.nativeEvent.key == "Enter") {
+      Keyboard.dismiss();
+    }
+  };
+  onScanAreaPress = () => {
+    Keyboard.dismiss();
+    this.setState({ shouldRender: true });
   };
   render() {
     const { shouldRender } = this.state;
-    if (shouldRender === false) {
-      return <View />;
-    } else {
-      const { hasCameraPermission } = this.state;
 
-      if (hasCameraPermission === null) {
-        return <Text>Requesting for camera permission</Text>;
-      } else if (hasCameraPermission === false) {
-        return <Text>No access to camera</Text>;
-      } else {
-        return (
-          <Drawer
-            ref={ref => {
-              this.drawer = ref;
-            }}
-            content={
-              <SideBar
-                navigation={this.props.navigation}
-                onUserAdminPress={this.buttonAdmin}
-                onInventoryPress={this.buttonInventory}
-                onPartsInventoryPress={this.buttonParts}
-              />
-            }
-            onClose={() => this.closeDrawer()}
-          >
-            <View style={{ flex: 1, justifyContent: "center" }}>
+    const { hasCameraPermission } = this.state;
+
+    if (hasCameraPermission === null) {
+      return <Text>Requesting for camera permission</Text>;
+    } else if (hasCameraPermission === false) {
+      return <Text>No access to camera</Text>;
+    } else {
+      const { height, width } = Dimensions.get("window");
+      const maskRowHeight = Math.round((height - 300) / 80);
+      const maskColWidth = (width - 300) / 2;
+      return (
+        <Drawer
+          ref={ref => {
+            this.drawer = ref;
+          }}
+          content={
+            <SideBar
+              permissions={this.state.userPermissions}
+              navigation={this.props.navigation}
+              onUserAdminPress={this.buttonAdmin}
+              onInventoryPress={this.buttonInventory}
+              onPartsInventoryPress={this.buttonParts}
+              onPurchaseListPress={this.buttonPurchaseList}
+            />
+          }
+          onClose={() => this.closeDrawer()}
+        >
+          <StatusBar hidden={true} />
+
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            {shouldRender === false ? (
+              <View />
+            ) : (
               <BarCodeScanner
                 onBarCodeRead={this._handleBarCodeRead}
                 style={StyleSheet.absoluteFill}
+                autoFocus={this.state.autoFocus}
+                focusDepth={this.state.depth}
               />
-              {this.state.blinking ? (
-                <View
-                  style={{
-                    borderBottomColor: "red",
-                    borderBottomWidth: 1,
-                    marginLeft: 35,
-                    marginRight: 35
-                  }}
-                />
-              ) : null}
+            )}
+            <View style={styles.maskOutter}>
+              <View
+                style={[
+                  { flex: maskRowHeight },
+                  styles.maskRow,
+                  styles.maskFrame
+                ]}
+              />
+              <View style={[{ flex: 30 }, styles.maskCenter]}>
+                <View style={[{ width: maskColWidth }, styles.maskFrame]} />
+                <TouchableHighlight
+                  style={styles.maskInner}
+                  onPress={() => this.onScanAreaPress()}
+                >
+                  <View />
+                </TouchableHighlight>
+                <View style={[{ width: maskColWidth }, styles.maskFrame]} />
+              </View>
+              <View
+                style={[
+                  { flex: maskRowHeight },
+                  styles.maskRow,
+                  styles.maskFrame
+                ]}
+              />
+            </View>
 
-              <KeyboardAvoidingView
-                behavior="padding"
+            <KeyboardAvoidingView
+              behavior="padding"
+              style={{
+                flex: 1,
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0
+              }}
+            >
+              <View
                 style={{
-                  flex: 1,
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0
+                  flex: 1
                 }}
               >
-                <View
+                <Item
+                  error={this.state.inputerror}
                   style={{
                     flex: 1
                   }}
                 >
-                  <Item
-                    error={this.state.inputerror}
+                  <Input
                     style={{
-                      flex: 1
+                      flex: 1,
+                      color: "white",
+                      textAlign: "center",
+                      backgroundColor: "rgba(0,0,0,0.3)",
+                      fontSize: 30
                     }}
-                  >
-                    <Input
-                      style={{
-                        flex: 1,
-                        color: "white",
-                        textAlign: "center",
-                        backgroundColor: "rgba(0,0,0,0.3)",
-                        fontSize: 30
-                      }}
-                      //  value = {this.state.name}
-                      //  editable = {true}
-                      //  placeholder = '{this.state.name}',
-                      placeholder="VIN"
-                      onChangeText={barcode => this.setState({ barcode })}
-                      value={this.state.barcode}
-                    />
-                  </Item>
+                    //  value = {this.state.name}
+                    //  editable = {true}
+                    //  placeholder = '{this.state.name}',
+                    placeholder="VIN"
+                    onChangeText={barcode => this.setState({ barcode })}
+                    onKeyPress={this.handleKeyDown}
+                    value={this.state.barcode}
+                  />
+                </Item>
 
-                  <Button full onPress={this.buttonClick}>
-                    <Text>Start</Text>
-                  </Button>
-                  {this.state.userPermissions[3] == "1" ||
-                  this.state.userPermissions[13] == "1" ? (
-                    <Fab
-                      active={true}
-                      direction="up"
-                      containerStyle={{}}
-                      style={{ backgroundColor: "#5067FF" }}
-                      position="bottomRight"
-                      onPress={this.fabButton}
-                    >
-                      <Icon name="add" />
-                    </Fab>
-                  ) : null}
-                </View>
-              </KeyboardAvoidingView>
-            </View>
-          </Drawer>
-        );
-      }
+                <Button full onPress={this.buttonClick}>
+                  <Text>Start</Text>
+                </Button>
+                {this.state.userPermissions[3] == "1" ||
+                this.state.userPermissions[13] == "1" ||
+                this.state.userPermissions[5] == "1" ? (
+                  <Fab
+                    active={true}
+                    direction="up"
+                    containerStyle={{}}
+                    style={{ backgroundColor: "#5067FF" }}
+                    position="bottomRight"
+                    onPress={this.fabButton}
+                  >
+                    <Icon name="add" />
+                  </Fab>
+                ) : null}
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </Drawer>
+      );
     }
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  },
+  cameraView: {
+    flex: 1,
+    justifyContent: "flex-start"
+  },
+  maskOutter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "space-around"
+  },
+  maskInner: {
+    width: 300,
+    backgroundColor: "transparent",
+    borderColor: "white",
+    borderWidth: 1
+  },
+  maskFrame: {
+    backgroundColor: "rgba(1,1,1,0.6)"
+  },
+  maskRow: {
+    width: "100%"
+  },
+  maskCenter: { flexDirection: "row" }
+});
 
 AppRegistry.registerComponent("BarcodeScanner", () => BarcodeScanner);

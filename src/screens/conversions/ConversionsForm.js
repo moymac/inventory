@@ -15,13 +15,15 @@ import {
   Right,
   Radio
 } from "native-base";
-import { updateSheet } from "../../Calls";
+import { appendToSheet, updateSheet } from "../../Calls";
 export default class ConversionsForm extends Component {
   state = {
     comment: "",
     vin: "",
     location: "",
-    accessToken: ""
+    accessToken: "",
+    selectedCompletion: "completed",
+    selectedWorkCode: "f"
   };
   componentWillMount() {
     const { params } = this.props.navigation.state;
@@ -44,13 +46,19 @@ export default class ConversionsForm extends Component {
       this.state.longitude,
       this.state.location,
       new Date(),
-      this.state.note,
+      this.state.notes,
       this.state.scannedFaceplate,
       this.state.selectedCompletion
     ];
-    //appendToSheet(this.state.accessToken, "Conversions", data);
+    appendToSheet(this.state.accessToken, "AllScans", data);
     //console.log(apptosht);
-    updateSheet(this.state.accessToken, "Conversions", this.state.vin, data);
+    updateSheet(
+      this.state.accessToken,
+      "barcode",
+      "Conversions",
+      this.state.vin,
+      data
+    );
 
     Alert.alert(
       "Conversion status updated",

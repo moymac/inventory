@@ -5,11 +5,10 @@ import {
   StyleSheet,
   Vibration,
   Keyboard,
-  Text,
   KeyboardAvoidingView,
   View
 } from "react-native";
-import { Item, Input, Label, Button } from "native-base";
+import { Item, Input, Label, Button, Text } from "native-base";
 import { BarCodeScanner, Permissions } from "expo";
 
 export default class ConversionsMain extends Component {
@@ -25,6 +24,7 @@ export default class ConversionsMain extends Component {
   };
 
   buttonClick = () => {
+    this.setState({ shouldRender: false });
     console.log("buttonClick");
     var globalParams = {
       userName: this.state.userName,
@@ -49,8 +49,10 @@ export default class ConversionsMain extends Component {
     this.state.accessToken = params.accessToken;
     Keyboard.dismiss();
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    this.setState({ hasCameraPermission: status === "granted" });
-    this.setState({ shouldRender: true });
+    this.setState({
+      hasCameraPermission: status === "granted",
+      shouldRender: true
+    });
     setInterval(() => {
       this.setState(previousState => {
         return { blinking: !previousState.blinking };
@@ -58,16 +60,20 @@ export default class ConversionsMain extends Component {
     }, 100);
   }
   _handleBarCodeRead = ({ type, data }) => {
-    Vibration.vibrate(300);
+    // Vibration.vibrate(300);
     this.setState({ faceplate: data });
   };
   render() {
-    const { shouldRender } = this.state;
+    const {
+      shouldRender,
+      blinking,
+      hasCameraPermission,
+      inputerror,
+      faceplate
+    } = this.state;
     if (shouldRender === false) {
       return <View />;
     } else {
-      const { hasCameraPermission } = this.state;
-
       if (hasCameraPermission === null) {
         return <Text>Requesting for camera permission</Text>;
       } else if (hasCameraPermission === false) {
@@ -79,7 +85,7 @@ export default class ConversionsMain extends Component {
               onBarCodeRead={this._handleBarCodeRead}
               style={StyleSheet.absoluteFill}
             />
-            {this.state.blinking ? (
+            {blinking ? (
               <View
                 style={{
                   borderBottomColor: "blue",
@@ -106,7 +112,7 @@ export default class ConversionsMain extends Component {
                 }}
               >
                 <Item
-                  error={this.state.inputerror}
+                  error={inputerror}
                   style={{
                     flex: 1
                   }}
@@ -123,13 +129,13 @@ export default class ConversionsMain extends Component {
                     //  editable = {true}
                     //  placeholder = '{this.state.name}',
                     placeholder="Faceplate model"
-                    onChangeText={faceplate => this.setState({ faceplate })}
-                    value={this.state.faceplate}
+                    onChangeText={fcplt => this.setState({ faceplate: fcplt })}
+                    value={faceplate}
                   />
                 </Item>
 
                 <Button block success onPress={this.buttonClick}>
-                  <Text>Start</Text>
+                  <Text>Submit</Text>
                 </Button>
               </View>
             </KeyboardAvoidingView>

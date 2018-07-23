@@ -97,6 +97,7 @@ export default class UserSelection extends Component<{}> {
         return { cancelled: true };
       }
     } catch (e) {
+      console.log(e);
       return { error: true };
     }
   }
@@ -137,25 +138,29 @@ export default class UserSelection extends Component<{}> {
         var appendresult = await appendToSheet(
           this.state.accessToken,
           "UserPermissions",
-          [usnm, usrmail, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
+          [
+            usnm,
+            usrmail,
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
         );
       }
-
-      // if (userType < 50 && userType > 0) {
-      //   AsyncStorage.setItem("userName", JSON.stringify(usnm));
-      //   AsyncStorage.setItem("userType", JSON.stringify(userType));
-      //   this.props.navigation.navigate("WelcomeScreen");
-      // } else {
-      //   Alert.alert("Not found", "User not registered, wait for approval");
-      //   if (userType != 0) {
-      //     var appendresult = await appendToSheet(
-      //       this.state.accessToken,
-      //       "Users",
-      //       [usnm, "0", usrmail]
-      //     );
-      //   }
-      // }
-      //this.props.navigation.navigate("WelcomeScreen");
     }
   };
 

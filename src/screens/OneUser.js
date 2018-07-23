@@ -21,6 +21,7 @@ import {
   List,
   ListItem,
   Switch,
+  Toast,
   Item as FormItem
 } from "native-base";
 const Item = Picker.Item;
@@ -57,11 +58,18 @@ export default class OneUser extends Component {
     header: null
   };
 
-  buttonClick = () => {
+  buttonClick = async () => {
     console.log("row", row, "permissionList", this.state.permissionList);
-    updateUserPermissions(this.state.accessToken, row, [
+    let wasUpdated = await updateUserPermissions(this.state.accessToken, row, [
       this.state.permissionList
     ]);
+    if (wasUpdated) {
+      Toast.show({
+        text: "Permissions updated",
+        position: "bottom",
+        type: "success"
+      });
+    }
   };
   render() {
     return (

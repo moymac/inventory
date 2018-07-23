@@ -18,6 +18,7 @@ import {
   View,
   Card,
   CardItem,
+  Toast,
   List,
   ListItem,
   Switch,
@@ -56,10 +57,20 @@ export default class UserAdministration extends Component {
     // console.log(helperArray);
   }
 
-  buttonClick = () => {
-    console.log("authToken", this.state.accessToken);
-    console.log("thelist", this.state.userList);
-    updateUserPermissionList(this.state.accessToken, this.state.userList);
+  buttonClick = async () => {
+    // console.log("authToken", this.state.accessToken);
+    // console.log("thelist", this.state.userList);
+    let wasUpdated = await updateUserPermissionList(
+      this.state.accessToken,
+      this.state.userList
+    );
+    if (wasUpdated) {
+      Toast.show({
+        text: "Permissions updated",
+        position: "bottom",
+        type: "success"
+      });
+    }
   };
   render() {
     return (

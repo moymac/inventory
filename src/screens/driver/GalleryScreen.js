@@ -17,13 +17,14 @@ export default class GalleryScreen extends React.Component {
   };
 
   componentDidMount() {
-    FileSystem.readDirectoryAsync(FileSystem.documentDirectory + "photos").then(
-      photos => {
-        this.setState({
-          photos
-        });
-      }
-    );
+    console.log(this.props.vin);
+    FileSystem.readDirectoryAsync(
+      FileSystem.documentDirectory + "photos" + this.props.vin
+    ).then(photos => {
+      this.setState({
+        photos
+      });
+    });
   }
 
   getImageDimensions = ({ width, height }) => {
@@ -55,17 +56,20 @@ export default class GalleryScreen extends React.Component {
   };
 
   render() {
+    const { vin } = this.props;
     return (
       <View style={styles.container}>
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           <View style={styles.pictures}>
-            {this.state.photos.map(photoUri => (
-              <View style={styles.pictureWrapper} key={photoUri}>
+            {this.state.photos.map((photoUri, index) => (
+              <View style={styles.pictureWrapper} key={index}>
                 <Image
-                  key={photoUri}
+                  key={index}
                   style={styles.picture}
                   source={{
-                    uri: `${FileSystem.documentDirectory}photos/${photoUri}`
+                    uri: `${
+                      FileSystem.documentDirectory
+                    }photos${vin}/${photoUri}`
                   }}
                 />
               </View>

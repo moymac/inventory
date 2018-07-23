@@ -97,6 +97,7 @@ export default class UserSelection extends Component<{}> {
         return { cancelled: true };
       }
     } catch (e) {
+      console.log(e);
       return { error: true };
     }
   }

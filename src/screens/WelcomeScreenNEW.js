@@ -12,7 +12,8 @@ import {
   PermissionsAndroid,
   AsyncStorage,
   CameraRoll,
-  View
+  View,
+  StatusBar
 } from "react-native";
 import {
   Text,
@@ -30,6 +31,8 @@ import { getUserPermissions } from "../Calls";
 
 export default class WelcomeScreen extends Component {
   async componentWillMount() {
+    Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
+
     await Expo.Font.loadAsync({
       Roboto: require("native-base/Fonts/Roboto.ttf"),
       Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
@@ -138,7 +141,7 @@ export default class WelcomeScreen extends Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status !== "granted") {
       alert(
-        "Hey! You might want to enable notifications for my app, they are good."
+        "Hey! You might want to enable camera access for my app, they are good."
       );
     } else {
       console.log("I have permissions");
@@ -153,7 +156,6 @@ export default class WelcomeScreen extends Component {
   _loadInitialState = async () => {
     try {
       var userNameValue = await AsyncStorage.getItem("userName");
-      console.log("userNameValue", userNameValue);
 
       //  var userTypeValue = await AsyncStorage.getItem("userType");
       if (userNameValue !== null) {
@@ -179,24 +181,6 @@ export default class WelcomeScreen extends Component {
         } else {
           Alert.alert("Not authorized", "User not authorized");
         }
-        //
-        // if (userTypeValue < 50 && userTypeValue > 0) {
-        //   this.timeoutHandle = setTimeout(() => {
-        //     if (userTypeValue == "2" || userTypeValue == "4") {
-        //       this.props.navigation.navigate("BarcodeScanner", {
-        //         username: this.state.username
-        //       });
-        //     } else {
-        //       this.props.navigation.navigate("BarcodeScanner", {
-        //         username: this.state.username
-        //       });
-        //     }
-        //   }, 1500);
-        //   //        this.setState({selectedValue: userNameValue});
-        //   //      this._appendMessage('Recovered selection from disk: ' + userNameValue);
-        // } else {
-        //   Alert.alert("Not authorized", "User not authorized anymore");
-        // }
       } else {
         this.props.navigation.navigate("UserSelection");
         this.state.username = "";
@@ -262,6 +246,8 @@ export default class WelcomeScreen extends Component {
 
     return (
       <Container>
+        <StatusBar hidden={true} />
+
         <Content>
           <Title style={{ paddingTop: 70, fontSize: 50 }}>Welcome</Title>
           <Title style={{ fontSize: 40 }}>{this.state.username}</Title>
@@ -281,8 +267,9 @@ export default class WelcomeScreen extends Component {
     //  const { user } = this.state;
     if (this.state.loaded && this.state.isReady) {
       return this.loaded();
+    } else {
+      return this.loading();
     }
-    return this.loading();
   }
 }
 

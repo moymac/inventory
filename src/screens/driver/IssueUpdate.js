@@ -56,7 +56,7 @@ export default class IssueUpdate extends Component {
         "",
         new Date()
       ];
-      appendToSheet(this.state.accessToken, "AllScans", data);
+      appendToSheet(this.state.accessToken, "barcode", "AllScans", data);
       updateSheet(
         this.state.accessToken,
         "VehicleIssues",
