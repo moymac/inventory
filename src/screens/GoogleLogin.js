@@ -34,7 +34,12 @@ export default class GoogleLogin extends Component {
 
       if (result.type === "success") {
         AsyncStorage.setItem("userName", JSON.stringify(result.user.name));
-        AsyncStorage.setItem("accessToken", JSON.stringify(result.accessToken));
+        if (result.accessToken) {
+          AsyncStorage.setItem(
+            "accessToken",
+            JSON.stringify(result.accessToken)
+          );
+        }
         this.props.navigation.navigate("WelcomeScreen");
         //global.accessToken = result.accessToken;
         //  return result.accessToken;

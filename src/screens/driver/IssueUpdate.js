@@ -56,9 +56,10 @@ export default class IssueUpdate extends Component {
         "",
         new Date()
       ];
-      appendToSheet(this.state.accessToken, "barcode", "AllScans", data);
+      appendToSheet(this.state.accessToken, "AllScans", data);
       updateSheet(
         this.state.accessToken,
+        "barcode",
         "VehicleIssues",
         this.state.vin,
         data
@@ -70,14 +71,14 @@ export default class IssueUpdate extends Component {
           {
             text: "Scan other vehicle",
             onPress: () => this.props.navigation.navigate("BarcodeScanner")
-          },
-          {
-            text: "Get vehicle data",
-            onPress: () =>
-              this.props.navigation.navigate("VehicleInfo", {
-                scannedValue: vin
-              })
           }
+          // {
+          //   text: "Get vehicle data",
+          //   onPress: () =>
+          //     this.props.navigation.navigate("VehicleInfo", {
+          //       scannedValue: vin
+          //     })
+          // }
         ],
         { cancelable: true }
       );

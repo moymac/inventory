@@ -29,6 +29,51 @@ const dropoffPlaceOptions = [
   { value: "recall", label: "Recall" }
 ];
 
+const bodyShopOptions = [
+  { value: "New GSM Recon", label: "New GSM Recon" },
+  {
+    label: "Old Truck lot",
+    value: "Old Truck lot"
+  },
+  {
+    label: "Efrain’s autobody",
+    value: "Efrains autobody"
+  },
+  {
+    label: "Gilberto’s autobody",
+    value: "Gilbertos autobody"
+  },
+  {
+    label: "Steven’s autobody",
+    value: "Stevens autobody"
+  },
+  {
+    label: "3A Mechanic",
+    value: "3A Mechanic"
+  },
+  {
+    label: "Danny’s auto repair",
+    value: "Dannys auto repair"
+  },
+  { label: "Ray’s dent shop", value: "Rays dent shop" },
+  {
+    label: "Matt VW Inside",
+    value: "Matt VW Inside"
+  },
+  {
+    label: "Kar Kraftsman",
+    value: "Kar Kraftsman"
+  },
+  {
+    label: "Old GSM Recon",
+    value: "Old GSM Recon"
+  },
+  {
+    label: "Other",
+    value: "other"
+  }
+];
+
 export default class PennsylvaniaArrival extends Component {
   constructor(props) {
     super(props);
@@ -39,7 +84,8 @@ export default class PennsylvaniaArrival extends Component {
       location: "",
       accessToken: "",
       reason: "",
-      placeSelection: ""
+      placeSelection: "",
+      bodyshopSelection: ""
     };
   }
   static navigationOptions = {
@@ -79,10 +125,16 @@ export default class PennsylvaniaArrival extends Component {
       bodyshopname,
       eta,
       accessToken,
-      placeSelection
+      placeSelection,
+      bodyshopSelection
     } = this.state;
     if (placeSelection == "") {
       Alert.alert("Please select a drop-off location");
+
+      return false;
+    }
+    if (bodyshopSelection == "other" && bodyshopname == "") {
+      Alert.alert("Please enter a body shop name");
 
       return false;
     }
@@ -123,24 +175,18 @@ export default class PennsylvaniaArrival extends Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
   };
-
-  onValueChange(value: string) {
-    this.setState({
-      placeSelection: value
-    });
-  }
 
   render() {
     const { params } = this.props.navigation.state;
@@ -169,6 +215,14 @@ export default class PennsylvaniaArrival extends Component {
               <Label>VIN</Label>
               <Input disabled value={vin} numberOfLines={2} />
             </Item>
+            <Item stackedLabel>
+              <Label>Location</Label>
+              <Input
+                multiline={true}
+                onChangeText={location => this.setState({ location })}
+                value={this.state.location}
+              />
+            </Item>
             <Item>
               {this.state.placeSelection == "" ? (
                 <Icon name="alert" style={{ color: "red" }} />
@@ -177,7 +231,9 @@ export default class PennsylvaniaArrival extends Component {
                 mode="dropdown"
                 placeholder="Select drop-off location"
                 selectedValue={this.state.placeSelection}
-                onValueChange={this.onValueChange.bind(this)}
+                onValueChange={value =>
+                  this.setState({ placeSelection: value })
+                }
               >
                 {dropoffPlaceOptions.map((option, idx) => (
                   <Picker.Item
@@ -188,20 +244,36 @@ export default class PennsylvaniaArrival extends Component {
                 ))}
               </Picker>
             </Item>
-            <Item stackedLabel>
-              <Label>Location</Label>
-              <Input
-                multiline={true}
-                onChangeText={location => this.setState({ location })}
-                value={this.state.location}
-              />
-            </Item>
-            <Item stackedLabel>
-              <Label>{this.state.placeSelection} name</Label>
-              <Input
-                onChangeText={bodyshopname => this.setState({ bodyshopname })}
-              />
-            </Item>
+            {this.state.placeSelection == "bodyshop" ? (
+              <Item>
+                <Picker
+                  mode="dropdown"
+                  placeholder="Select body shop"
+                  selectedValue={this.state.bodyshopSelection}
+                  onValueChange={value =>
+                    this.setState({ bodyshopSelection: value })
+                  }
+                >
+                  {bodyShopOptions.map((option, idx) => (
+                    <Picker.Item
+                      key={idx}
+                      label={option.label}
+                      value={option.value}
+                    />
+                  ))}
+                </Picker>
+              </Item>
+            ) : null}
+            {this.state.bodyshopSelection === "other" ||
+            this.state.placeSelection == "recall" ? (
+              <Item stackedLabel>
+                <Label>{this.state.placeSelection} name</Label>
+                <Input
+                  onChangeText={bodyshopname => this.setState({ bodyshopname })}
+                />
+              </Item>
+            ) : null}
+
             <Item>
               <Button
                 transparent

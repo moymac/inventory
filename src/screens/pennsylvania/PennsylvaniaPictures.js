@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Vibration, Alert, CameraRoll } from "react-native";
+import { View, Alert, CameraRoll, AsyncStorage } from "react-native";
 import { Camera, Permissions, FileSystem, MailComposer, Asset } from "expo";
 import {
   Icon,
@@ -14,12 +14,7 @@ import {
 import GalleryScreen from "./GalleryScreen";
 import PhotoPreview from "./PhotoPreview";
 
-import {
-  createDrivePAFolder,
-  uploadToDrive,
-  appendToSheet,
-  refreshToken
-} from "../../Calls";
+import { createDrivePAFolder, uploadToDrive, appendToSheet } from "../../Calls";
 //import GDrive from "react-native-google-drive-api-wrapper";
 const flashModeOrder = {
   off: "on",
@@ -43,7 +38,6 @@ var pictureName = "";
 export default class CameraExample extends React.Component {
   constructor(props) {
     super(props);
-    console.log(props);
     const {
       scannedValue,
       userName,
@@ -82,39 +76,41 @@ export default class CameraExample extends React.Component {
     Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
 
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    const { selectedScreen } = this.state;
+    const { selectedScreen, photoId } = this.state;
+    let { screenTitle } = this.state;
     switch (selectedScreen) {
       case "Pennsylvania arrival":
-        this.setState({ screenTitle: "VIN label/plate" });
+        screenTitle = "VIN label/plate";
         break;
       case "Needs bodywork":
-        this.setState({ screenTitle: `Damage ${this.state.photoId + 1}` });
+        screenTitle = `Damage ${this.state.photoId + 1}`;
         break;
       case "Recall pick up":
-        this.setState({ screenTitle: "Recall document" });
+        screenTitle = "Recall document";
         break;
       case "Clusters":
-        this.setState({ screenTitle: "Invoice" });
+        screenTitle = "Invoice";
         break;
     }
     this.setState({
-      hasCameraPermission: status === "granted"
+      hasCameraPermission: status === "granted",
+      screenTitle
     });
   }
   async componentDidMount() {
     //  refreshToken(this.state.refreshToken);
-    console.log("folderid", this.state.folderId);
-    let folderId = this.state.folderId;
+
+    let { folderId, vin } = this.state;
+
     if (folderId == undefined) {
       folderId = await createDrivePAFolder(
         this.state.accessToken,
-        this.state.vin + "_" + this.state.userName
+        vin + "_" + this.state.userName
       );
     }
     if (folderId) {
-      this.setState({ folderId });
       let data = [
-        this.state.vin,
+        vin,
         this.state.userName,
         this.state.latitude,
         this.state.longitude,
@@ -126,7 +122,9 @@ export default class CameraExample extends React.Component {
         new Date()
       ];
       appendToSheet(this.state.accessToken, "vehiclePictures", data);
-
+      if (this.state.selectedScreen == "Clusters") {
+        appendToSheet(this.state.accessToken, "Clusters", data);
+      }
       try {
         await FileSystem.makeDirectoryAsync(
           `${FileSystem.cacheDirectory}photos` + this.state.vin,
@@ -137,6 +135,7 @@ export default class CameraExample extends React.Component {
       } catch (e) {
         console.log(e);
       }
+      this.setState({ folderId });
     } else {
       Toast.show({
         text: "Internet error,check your connection",
@@ -170,42 +169,84 @@ export default class CameraExample extends React.Component {
         position: "top",
         type: "warning"
       });
+      let data = [
+        new Date(),
+        "Pennsylvania Picture upload fail",
+        this.state.userName,
+        JSON.stringify(uploadResponse)
+      ];
+      appendToSheet(this.state.accessToken, "ERRORS", data);
       // Toast.show("This is a toast fail.");
     }
   }
 
-  nextPicture = async () => {
+  nextPicture = () => {
     const {
       accessToken,
       folderId,
       fileBase64,
       vin,
       photoUris,
-      selectedScreen
+      selectedScreen,
+      photoId
     } = this.state;
 
     this.uploadAndAlert(accessToken, folderId, pictureName, fileBase64);
     CameraRoll.saveToCameraRoll(
       `${FileSystem.cacheDirectory}photos` + vin + `/${pictureName}.jpg`
     );
-
-    if (selectedScreen == "Pennsylvania arrival") {
-      this.props.navigation.navigate("PennsylvaniaArrival", {
-        ...this.props.navigation.state.params,
-        folderId: this.state.folderId
-      });
-    }
-
     photoUris.push(
       `${FileSystem.cacheDirectory}photos` + vin + `/${pictureName}.jpg`
     );
+    switch (selectedScreen) {
+      case "Pennsylvania arrival":
+        this.props.navigation.navigate("PennsylvaniaArrival", {
+          ...this.props.navigation.state.params,
+          folderId
+        });
+        break;
+      case "Clusters":
+        if (photoId > 1) {
+          this.setState({
+            photoId: photoId + 1,
+            showGallery: true,
+            showPreview: false,
+            photoUris
+          });
+        } else {
+          this.setState({
+            photoId: photoId + 1,
+            showGallery: false,
+            showPreview: false,
+            photoUris
+          });
+        }
+        break;
+      default:
+        this.setState({
+          photoId: photoId + 1,
+          showGallery: true,
+          showPreview: false,
+          photoUris
+        });
+    }
 
-    this.setState({
-      photoId: this.state.photoId + 1,
-      showGallery: true,
-      showPreview: false,
-      photoUris
-    });
+    // if (selectedScreen == "Pennsylvania arrival") {
+    //   this.props.navigation.navigate("PennsylvaniaArrival", {
+    //     ...this.props.navigation.state.params,
+    //     folderId: this.state.folderId
+    //   });
+    // }
+    //
+    //
+    // if (selectedScreen == 'Clusters'){
+    //   this.setState({
+    //     photoId: this.state.photoId + 1,
+    //     showGallery: false,
+    //     showPreview: false,
+    //     photoUris
+    //   });
+    // }
   };
   morePictures() {
     this.setState({
@@ -219,11 +260,16 @@ export default class CameraExample extends React.Component {
     // this.state.photoUris.map(item => {
     //   attachments.push(Asset.fromModule(require(item)).localUri);
     // });
+    let recipients = ["admin@germanstarmotors.ca"];
+    if (this.state.selectedScreen == "Clusters") {
+      recipients = ["ajay@germanstarmotors.ca"];
+    }
+
     try {
       await MailComposer.composeAsync({
-        recipients: ["admin@germanstarmotors.ca"],
+        recipients,
         subject: `${this.state.selectedScreen} ${this.state.vin}`,
-        body: `Vehicle pictures at ${this.state.location}`,
+        body: `Pictures at ${this.state.location}`,
         attachments: this.state.photoUris
       });
     } catch (e) {
@@ -237,14 +283,14 @@ export default class CameraExample extends React.Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: this.state.vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: this.state.vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
@@ -271,7 +317,7 @@ export default class CameraExample extends React.Component {
   takePicture = async function() {
     // console.log(FileSystem.documentDirectory);
     // alert(FileSystem.documentDirectory);
-    const { selectedScreen } = this.state;
+    const { selectedScreen, photoId } = this.state;
     let pictureType = "";
     switch (selectedScreen) {
       case "Recall pick up":
@@ -283,13 +329,30 @@ export default class CameraExample extends React.Component {
       case "Needs bodywork":
         pictureType = "Damage_";
         break;
+      case "Clusters":
+        switch (photoId) {
+          case 0:
+            pictureType = "Invoice_";
+            this.setState({ screenTitle: "Speedometer front" });
+            break;
+          case 1:
+            pictureType = "Speedometer_front_";
+            this.setState({ screenTitle: "Speedometer back" });
+
+            break;
+          case 2:
+            pictureType = "Speedometer_back_";
+            break;
+          default:
+            pictureType = "Clusters_";
+        }
     }
 
     pictureName =
       pictureType +
       this.state.vin.slice(-6) +
       "_" +
-      this.state.photoId +
+      photoId +
       new Date().getMilliseconds();
     // console.log("picturename", pictureName);
     if (this.camera) {
@@ -298,7 +361,7 @@ export default class CameraExample extends React.Component {
         base64: true
       });
       // Vibration.vibrate();
-      await FileSystem.moveAsync({
+      FileSystem.moveAsync({
         from: photofile.uri,
         to:
           `${FileSystem.cacheDirectory}photos` +
@@ -397,8 +460,8 @@ export default class CameraExample extends React.Component {
     const cameraScreenContent = this.state.showGallery
       ? this.renderGallery()
       : this.state.showPreview
-        ? this.renderPreview()
-        : this.renderCamera();
+      ? this.renderPreview()
+      : this.renderCamera();
     return <View style={{ flex: 1 }}>{cameraScreenContent}</View>;
   }
 }

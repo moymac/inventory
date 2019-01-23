@@ -119,8 +119,6 @@ export default class WelcomeScreen extends Component {
       alert(
         "Hey! You might want to enable notifications for my app, they are good."
       );
-    } else {
-      alert("I have permissions");
     }
   }
 

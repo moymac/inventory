@@ -107,7 +107,6 @@ export default class GatePass extends Component {
 
   vinClick(clickedVin) {
     const { params } = this.props.navigation.state;
-    console.log(params);
     ActionSheet.show(
       {
         options: params.userFunctionNames,
@@ -154,6 +153,7 @@ export default class GatePass extends Component {
           this.state.day +
           "'"
       );
+
       cleanResponse = response._bodyInit.substr(8).slice(0, -2);
       cleanResponse = cleanResponse.replace(
         "google.visualization.Query.setResponse(",
@@ -207,12 +207,7 @@ export default class GatePass extends Component {
         <Text>{data}</Text>
       </Button>
     );
-    const pickedUpCell = (data, col, row) => (
-      <CheckBox
-        checked={data == "Y"}
-        onPress={() => this.pickedUpCheck(col, row)}
-      />
-    );
+    const pickedUpCell = (data, col, row) => <CheckBox checked={data == "Y"} />;
     const vinCell = (data, col, row) => (
       <Button transparent onPress={() => this.vinClick(data)}>
         <Text>{data}</Text>
@@ -376,10 +371,10 @@ export default class GatePass extends Component {
                           cellIndex === 7
                             ? gatepassCell(cellData, cellIndex, rowIndex)
                             : cellIndex === 0
-                              ? pickedUpCell(cellData, cellIndex, rowIndex)
-                              : cellIndex === 2
-                                ? vinCell(cellData, cellIndex, rowIndex)
-                                : cellData
+                            ? pickedUpCell(cellData, cellIndex, rowIndex)
+                            : cellIndex === 2
+                            ? vinCell(cellData, cellIndex, rowIndex)
+                            : cellData
                         }
                         textStyle={styles.text}
                       />
@@ -403,8 +398,6 @@ export default class GatePass extends Component {
 
     //      this.setState({ imageUrI: result });
     // this.upload(result)
-
-    console.log("result", saveresult);
   };
   shareGatePass = async () => {
     if (Platform.OS == "ios") {

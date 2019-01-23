@@ -1,13 +1,11 @@
 import React, { Component } from "react";
 import {
   AppRegistry,
-  Platform,
   StyleSheet,
   View,
   Keyboard,
   AsyncStorage,
   BackHandler,
-  Slider,
   StatusBar,
   KeyboardAvoidingView,
   Dimensions,
@@ -15,16 +13,8 @@ import {
 } from "react-native";
 import {
   Text,
-  Title,
-  Container,
-  Header,
-  Content,
-  Footer,
-  Form,
   Item,
   Input,
-  Label,
-  FooterTab,
   ActionSheet,
   Button,
   Drawer,
@@ -35,12 +25,7 @@ import { BarCodeScanner, Permissions } from "expo";
 import SideBar from "./SideBar";
 
 import { getLatestAccessToken } from "./Calls";
-const COMMON = [
-  "Update location",
-  "Issue update",
-  "Upload pictures",
-  "Vehicle Info"
-];
+
 var userFunctionNames = [];
 var userFunctionScreens = [];
 
@@ -60,31 +45,35 @@ const ALLFUNCTIONS = [
 ];
 
 export default class BarcodeScanner extends Component {
-  state = {
-    hasCameraPermission: null,
-    shouldRender: true,
-    inputerror: false,
-    barcode: "",
-    userType: "",
-    userName: "",
-    accessToken: "",
-    refreshToken: "",
-    autoFocus: "on",
-    depth: 0,
-    userPermissions: []
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      hasCameraPermission: null,
+      shouldRender: true,
+      inputerror: false,
+      barcode: "",
+      userType: "",
+      userName: "",
+      accessToken: "",
+      refreshToken: "",
+      autoFocus: "on",
+      depth: 0,
+      userPermissions: []
+    };
+  }
 
   async componentWillMount() {
+    // getAllFromCarsShipped();
+
     Keyboard.dismiss();
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    this.setState({ hasCameraPermission: status === "granted" });
-    this.setState({ shouldRender: true });
+    this.setState({
+      hasCameraPermission: status === "granted",
+      shouldRender: true
+    });
     this.openDrawer();
   }
 
-  constructor(props) {
-    super(props);
-  }
   handleBackButton() {
     return true;
   }
@@ -97,11 +86,11 @@ export default class BarcodeScanner extends Component {
     //this.setState({ shouldRender: true });
     navigator.geolocation.getCurrentPosition(
       position => {
-        this.setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          error: null
-        });
+        // this.setState({
+        //   latitude: position.coords.latitude,
+        //   longitude: position.coords.longitude,
+        //   error: null
+        // });
         const myApiKey = "AIzaSyB_e7LpjDy5Nopf3DRrs1endVkQJ3lTCv4";
         fetch(
           "https://maps.googleapis.com/maps/api/geocode/json?address=" +
@@ -114,6 +103,9 @@ export default class BarcodeScanner extends Component {
           .then(response => response.json())
           .then(responseJson => {
             this.setState({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              error: null,
               address: JSON.stringify(responseJson.results[0].formatted_address)
             });
           });
@@ -125,15 +117,15 @@ export default class BarcodeScanner extends Component {
   _loadInitialState = async () => {
     try {
       let storageItem = await AsyncStorage.getItem("userPermissions");
-      const userPermissions = JSON.parse(storageItem);
+      const userPermissions = await JSON.parse(storageItem);
       global.userPermissions = userPermissions;
 
       storageItem = await AsyncStorage.getItem("userName");
-      const userName = JSON.parse(storageItem);
+      const userName = await JSON.parse(storageItem);
       storageItem = await AsyncStorage.getItem("accessToken");
-      const accessToken = JSON.parse(storageItem);
+      const accessToken = await JSON.parse(storageItem);
       storageItem = await AsyncStorage.getItem("refreshToken");
-      const refreshToken = JSON.parse(storageItem);
+      const refreshToken = await JSON.parse(storageItem);
 
       this.setState({ userPermissions, userName, accessToken, refreshToken });
       // var userNameValue = await JSON.parse(AsyncStorage.getItem("userName"));
@@ -213,15 +205,25 @@ export default class BarcodeScanner extends Component {
   buttonParts = async () => {
     this.setState({ shouldRender: false });
     let newAccessToken = await getLatestAccessToken();
-    var globalParams = await {
-      userType: this.state.userType,
-      userName: this.state.userName,
-      latitude: this.state.latitude,
-      longitude: this.state.longitude,
-      address: this.state.address,
-      error: this.state.error,
+    const {
+      userType,
+      userName,
+      barcode,
+      latitude,
+      longitude,
+      address,
+      error,
+      refreshToken
+    } = this.state;
+    var globalParams = {
+      userType,
+      userName,
+      latitude,
+      longitude,
+      address,
+      error,
       accessToken: newAccessToken,
-      refreshToken: this.state.refreshToken
+      refreshToken
     };
     //    this.setState({ shouldRender: false });
     //
@@ -276,9 +278,10 @@ export default class BarcodeScanner extends Component {
       longitude,
       address,
       error,
-      refreshToken
+      refreshToken,
+      barcode
     } = this.state;
-    scannedValue = this.state.barcode;
+    const scannedValue = barcode;
 
     if (scannedValue.length < 3) {
       this.setState({ inputerror: true });
@@ -327,6 +330,7 @@ export default class BarcodeScanner extends Component {
   handleKeyDown = e => {
     if (e.nativeEvent.key == "Enter") {
       Keyboard.dismiss();
+      this.buttonClick;
     }
   };
   onScanAreaPress = () => {
@@ -334,9 +338,7 @@ export default class BarcodeScanner extends Component {
     this.setState({ shouldRender: true });
   };
   render() {
-    const { shouldRender } = this.state;
-
-    const { hasCameraPermission } = this.state;
+    const { shouldRender, hasCameraPermission } = this.state;
 
     if (hasCameraPermission === null) {
       return <Text>Requesting for camera permission</Text>;

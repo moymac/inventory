@@ -53,7 +53,6 @@ export default class UserAdministration extends Component {
     ///////CREATE THE TITLE ARRAY!!!!!
 
     this.setState({ userList: helperArray });
-    console.log(titleArray);
     // console.log(helperArray);
   }
 

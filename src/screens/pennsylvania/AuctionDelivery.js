@@ -83,14 +83,14 @@ export default class PennsylvaniaArrival extends Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: this.state.vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: this.state.vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS

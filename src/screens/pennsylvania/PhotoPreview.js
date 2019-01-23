@@ -64,8 +64,7 @@ export default class PhotoPreview extends React.Component {
   render() {
     const { picture } = this.props;
     const { vin } = this.props;
-    console.log(vin);
-    console.log("picturetopreview", picture);
+
     return (
       <Container>
         <View style={styles.container}>

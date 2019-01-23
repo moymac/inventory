@@ -63,14 +63,14 @@ export default class ArbitrationUpdate extends Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS

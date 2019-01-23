@@ -68,7 +68,6 @@ export default class UserSelection extends Component<{}> {
           "https://www.googleapis.com/auth/spreadsheets"
         ]
       });
-      console.log("fetchresult", result);
       if (result.type === "success") {
         //AsyncStorage.setItem("accessToken", JSON.stringify(token));
         token = result.accessToken;
@@ -125,7 +124,6 @@ export default class UserSelection extends Component<{}> {
       this.setState({ inputerror: true });
     } else {
       let userPermissions = await getUserPermissions(usnm);
-      console.log("usrperm", userPermissions);
       if (userPermissions) {
         if (userPermissions[2] == "1") {
           AsyncStorage.setItem("userName", JSON.stringify(usnm));

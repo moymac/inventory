@@ -10,11 +10,10 @@ const androidClientId =
 const iosClientId =
   "544692012409-8cafh0jufk41bf4a10ht39fe4qrg6app.apps.googleusercontent.com";
 import { Alert, AsyncStorage, Platform } from "react-native";
-import Expo from "expo";
-
+import Expo, { FileSystem } from "expo";
 const barcodeID = "1AujvrsRW7vxqFCO2a0ozvF_3QQIEU32yyTI51ccXLTU";
 const reconID = "1c1FRKFhlixxteuGC1SiWbD30BMiNOOwAHn3Im-0uGJk";
-
+const shippingID = "1qCMyJKCE7Ym12o_s4YX40VNfwQYOyhIXshJdKsks_N0";
 export async function signInWithGoogleAsync() {
   try {
     const result = await Expo.Google.logInAsync({
@@ -63,32 +62,38 @@ export async function refreshToken(refToken) {
         method: "POST"
       }
     );
+    console.log("response", response);
+
     if (response.status != 200) {
       console.log("refreshToken not 200", response);
     }
+    let tokens = await response.json();
+    console.log(tokens);
 
-    let tokens = JSON.parse(response._bodyInit);
+    // let tokens = await JSON.parse(response._bodyInit);
     //  console.log("refreshresponse", tokens.access_token);
 
     //tokens = await JSON.parse(response._bodyInit).values;
     //console.log("tokens.access_token", tokens.access_token);
-
-    AsyncStorage.setItem("accessToken", JSON.stringify(tokens.access_token));
-    console.log("accessToken refreshed and stored", tokens.access_token);
+    if (tokens.access_token) {
+      await AsyncStorage.setItem(
+        "accessToken",
+        await JSON.stringify(tokens.access_token)
+      );
+    }
     return tokens.access_token;
   } catch (error) {
     console.error(error.message);
+    return null;
   }
 }
 
 export async function appendToSheet(accessToken, sheetName, valueArray) {
-  //  console.log("appendcall", accessToken, sheetName, valueArray);
   //  accessToken = signInWithGoogleAsync();
   try {
     let data = JSON.stringify({
       values: [valueArray]
     });
-    //  console.log("appendToSheet",data);
     let response = await fetch(
       "https://sheets.googleapis.com/v4/spreadsheets/" +
         barcodeID +
@@ -106,7 +111,6 @@ export async function appendToSheet(accessToken, sheetName, valueArray) {
     if (response.status != 200) {
       console.log("appendToSheet not 200", response);
     }
-    //  console.log(response);
   } catch (error) {
     console.error(error.message);
   }
@@ -140,6 +144,29 @@ export async function updatePurchaseListPU(accessToken, row, pickedUp) {
   }
 }
 
+export async function updateShipping(accessToken, arrivedDate, row) {
+  let data = JSON.stringify({
+    values: [[arrivedDate]]
+  });
+  const response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets/" +
+      shippingID +
+      "/values/" +
+      "Cars shipped" +
+      "!AB" +
+      row +
+      "?includeValuesInResponse=false&valueInputOption=RAW&fields=updatedRows&key=" +
+      apiKEY,
+
+    {
+      method: "PUT",
+      headers: { Authorization: "Bearer " + accessToken },
+      body: data
+    }
+  );
+  console.log(response);
+}
+
 export async function updateSheet(
   accessToken,
   workBook,
@@ -149,6 +176,9 @@ export async function updateSheet(
 ) {
   let sheetKey = barcodeID;
   switch (workBook) {
+    case "shipping":
+      sheetKey = shippingID;
+      break;
     case "recon":
       sheetKey = reconID;
       break;
@@ -156,7 +186,6 @@ export async function updateSheet(
       sheetKey = barcodeID;
   }
 
-  //  console.log("updatevalues", accessToken, sheetName, searchValue, valueArray);
   let data = JSON.stringify({
     values: [valueArray]
   });
@@ -177,7 +206,9 @@ export async function updateSheet(
     if (range.status != 200) {
       console.log("updateSheet get array not 200", range);
     }
-    rangevalues = await JSON.parse(range._bodyInit).values;
+    let rangeJson = await range.json();
+    rangevalues = rangeJson.values;
+    // rangevalues = await JSON.parse(range._bodyInit).values;
     let i = 2;
     let replaceRow = 0;
     let response;
@@ -228,7 +259,6 @@ export async function updateSheet(
   } catch (e) {
     console.log(e);
   }
-  //  console.log(response);
 }
 
 export async function getUserType(userNameSearch) {
@@ -245,9 +275,10 @@ export async function getUserType(userNameSearch) {
       headers: { Authorization: "Bearer " + accessToken }
     }
   );
-  rangevalues = JSON.parse(range._bodyInit).values;
+  let rangeJson = await range.json();
+  let rangevalues = rangeJson.values;
+  // let rangevalues = JSON.parse(range._bodyInit).values;
   for (let row of rangevalues) {
-    //    console.log("rowvalue", row[0].toLowerCase());
     if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row[1];
   }
 }
@@ -255,6 +286,8 @@ export async function getUserType(userNameSearch) {
 export async function getUserPermissions(userNameSearch) {
   let data = await AsyncStorage.getItem("accessToken");
   let accessToken = await JSON.parse(data);
+  // console.log("accessToken", accessToken);
+
   try {
     let range = await fetch(
       "https://sheets.googleapis.com/v4/spreadsheets/" +
@@ -266,30 +299,21 @@ export async function getUserPermissions(userNameSearch) {
         headers: { Authorization: "Bearer " + accessToken }
       }
     );
-    rangevalues = JSON.parse(range._bodyInit).values;
+    if (range.status !== 200) {
+      console.log("PROBLEM?", range);
+    }
+    let rangeJson = await range.json();
+    let rangevalues = await rangeJson.values;
+
     for (let row of rangevalues) {
-      //  console.log("rowvalue", row[0].toLowerCase());
+      // console.log(row);
       if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
     }
+    return null;
   } catch (e) {
     console.log(e);
   }
 }
-//
-// export async function getUserPermissions(userNameSearch) {
-//   let range = await fetch(
-//     "https://sheets.googleapis.com/v4/spreadsheets/" +
-//       barcodeID +
-//       "/values/UserPermissions!A2%3AU50?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
-//       apiKEY
-//   );
-//   console.log(range);
-//   rangevalues = JSON.parse(range._bodyInit).values;
-//   for (let row of rangevalues) {
-//     //  console.log("rowvalue", row[0].toLowerCase());
-//     if (row[0].toLowerCase() == userNameSearch.toLowerCase()) return row;
-//   }
-// }
 
 export async function getUserList() {
   let data = await AsyncStorage.getItem("accessToken");
@@ -306,7 +330,6 @@ export async function getUserList() {
     }
   );
   responseJson = await response.json();
-  //  console.log(responseJson.values);
   return responseJson.values;
 }
 export async function updateUserList(accessToken, newList) {
@@ -330,7 +353,6 @@ export async function updateUserList(accessToken, newList) {
       body: jsonbody
     }
   );
-  //  console.log(await response.json());
 }
 
 export async function getUserPermissionList() {
@@ -348,7 +370,6 @@ export async function getUserPermissionList() {
     }
   );
   responseJson = await response.json();
-  //  console.log(responseJson.values);
   return responseJson.values;
 }
 export async function updateUserPermissionList(accessToken, newList) {
@@ -408,27 +429,163 @@ export async function updateUserPermissions(accessToken, row, newList) {
   }
 }
 
-export async function getVehicleSaleDate(VIN) {
+export async function getAllShipping() {
+  console.log("getAllShipping");
+
   let data = await AsyncStorage.getItem("accessToken");
   let accessToken = await JSON.parse(data);
+  // console.log("accessToken");
 
   try {
     let range = await fetch(
       "https://sheets.googleapis.com/v4/spreadsheets/" +
-        barcodeID +
-        "/values/ReconVehicleImport!A1%3AH?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+        shippingID +
+        "/values/Cars%20Shipped!B2%3AAF?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
         apiKEY,
       {
         method: "GET",
         headers: { Authorization: "Bearer " + accessToken }
       }
     );
-    rangevalues = JSON.parse(range._bodyInit).values;
-    for (let row of rangevalues) {
-      //    console.log("rowvalue", row[0].toLowerCase());
-      if (row[0] != undefined && row[0].toLowerCase() == VIN.toLowerCase())
-        return row[7];
+    if (range.status !== 200) {
+      console.log(range);
     }
+    const jsonResponse = await range.json();
+    // // console.log("range", jsonResponse);
+    const shippingString = JSON.stringify(jsonResponse);
+    await FileSystem.writeAsStringAsync(
+      FileSystem.documentDirectory + "fullShippingList",
+      shippingString
+    );
+    // return jsonResponse;
+    // await AsyncStorage.setItem("fullShipping", range._bodyInit);
+    console.log("shippinglistsaved");
+
+    // let rangevalues = JSON.parse(range._bodyInit).values;
+  } catch (error) {
+    console.log(error);
+  }
+}
+export async function getAllShippingOLD() {
+  console.log("getAllShipping");
+
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+  // console.log("accessToken");
+
+  try {
+    let range = await fetch(
+      "https://sheets.googleapis.com/v4/spreadsheets/" +
+        shippingID +
+        "/values/Cars%20Shipped!B2%3AAF?dateTimeRenderOption=FORMATTED_STRING&majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&fields=values&key=" +
+        apiKEY,
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+    const jsonResponse = await range.json();
+    // console.log("range", jsonResponse);
+
+    return jsonResponse;
+    // await AsyncStorage.setItem("fullShipping", range._bodyInit);
+
+    // let rangevalues = JSON.parse(range._bodyInit).values;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getVehicleSaleDate(VIN, allShipping) {
+  // console.log(allShipping);
+
+  // let data = await AsyncStorage.getItem("accessToken");
+  // let accessToken = await JSON.parse(data);
+  let saleDate = "nodata";
+  let entryNumber = null;
+  let rowNum = 0;
+  let loadList = [];
+  let repairNote = null;
+  // console.log("getvehiclesaledate");
+
+  try {
+    let rangevalues = allShipping.values;
+
+    rangevalues.forEach((row, index) => {
+      if (row[3] != undefined && row[3].toLowerCase() == VIN.toLowerCase()) {
+        saleDate = row[30];
+        entryNumber = row[15] == "" ? null : row[15];
+        rowNum = index + 2;
+        repairNote = row[28] == "" ? null : row[28];
+      }
+    });
+    if (entryNumber) {
+      for (let row of rangevalues) {
+        if (row[15] != undefined && row[15].toLowerCase() == entryNumber) {
+          loadList.push([
+            row[26],
+            row[0],
+            row[1],
+            row[2],
+            row[7],
+            row[3],
+            row[28]
+          ]);
+        }
+      }
+    }
+    return { saleDate, entryNumber, loadList, rowNum, repairNote };
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+export async function getLoad(entryNumber) {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
+  try {
+    let range = await fetch(
+      "https://docs.google.com/a/google.com/spreadsheets/d/" +
+        shippingID +
+        "/gviz/tq?tq=" +
+        "select%20*%20where%20Q%20%3D%20%27" +
+        entryNumber +
+        "%27&gid=893587109",
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+    let rangevalues = range._bodyInit;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+export async function getVehicleDataFromShipping(VIN) {
+  let data = await AsyncStorage.getItem("accessToken");
+  let accessToken = await JSON.parse(data);
+
+  try {
+    let range = await fetch(
+      "https://docs.google.com/a/google.com/spreadsheets/d/" +
+        shippingID +
+        "/gviz/tq?tq=" +
+        "select%20*%20where%20E%20%3D%20%27" +
+        VIN +
+        "%27&gid=893587109&tqx=out:html",
+      {
+        method: "GET",
+        headers: { Authorization: "Bearer " + accessToken }
+      }
+    );
+    // console.log("range", range);
+    rangevalues = await range.json();
+    let DomParser = require("react-native-html-parser").DOMParser;
+    let doc = new DomParser().parseFromString(rangevalues, "text/html");
+
+    // console.log(doc.getElementsByTagName("td"));
   } catch (e) {
     console.log(e);
   }
@@ -448,7 +605,8 @@ export async function getVehicleInfo(vinSearch) {
       headers: { Authorization: "Bearer " + accessToken }
     }
   );
-  rangevalues = JSON.parse(range._bodyInit).values;
+  let rangeJson = await range.json();
+  rangevalues = rangeJson.values;
   let rowNum = 1;
   let vehicleInformation = "";
   for (let row of rangevalues) {
@@ -489,6 +647,7 @@ export async function getDriveFolderContents(accessToken, folderId) {
     console.log("getDriveFolderContents not 200", response);
   }
 }
+
 export async function uploadToDrive(
   accessToken,
   parentFolderID,
@@ -619,4 +778,22 @@ export async function createDrivePAFolder(accessToken, folderName) {
     console.log(error.message);
     return null;
   }
+}
+
+export async function findAdesaVin(vin) {
+  const ADESAURL =
+    "https://amg.adesa.com/amgsearch/api/rest/1.0-transaction/purchase.json?facets=locIdNamef&facets=buyerIdName&plId=29&userId=334087&orgId=245725&vin=" +
+    vin +
+    "&st=0&sz=25&&";
+  let response = await fetch(ADESAURL, {
+    method: "GET",
+    headers: {
+      Referer:
+        "https://buy.adesa.ca/openauctionca/myPurchaseReport.html?gaVersion=2&gaFromPage=home&gaFromPageEle=commonheader_openlanepurchases&gaOrgId=245725",
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"
+    }
+  });
+
+  console.log(response);
 }

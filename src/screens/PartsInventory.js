@@ -39,8 +39,8 @@ export default class PartsInventory extends Component {
     latitude: "",
     longitude: "",
     location: "",
-    selectedRack: "",
-    selectedLevel: "A",
+    selectedRack: "A",
+    selectedLevel: "1",
     selectedRow: "1"
   };
   buttonAdd = () => {

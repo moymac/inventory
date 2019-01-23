@@ -41,13 +41,8 @@ export default class UserAdministration extends Component {
     helperArray = await getUserList();
     this.setState({ userList: helperArray });
   }
-  onValueChange(position, value) {
-    console.log("pos,value", position, value);
-    console.log("userlist", this.state.userList);
-  }
+
   buttonClick = () => {
-    console.log("authToken", this.state.accessToken);
-    console.log("thelist", this.state.userList);
     updateUserList(this.state.accessToken, this.state.userList);
   };
   render() {

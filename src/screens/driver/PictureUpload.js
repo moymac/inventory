@@ -81,7 +81,6 @@ export default class CameraExample extends React.Component {
   }
   async componentDidMount() {
     //  refreshToken(this.state.refreshToken);
-    console.log(this.state.accessToken);
     let folderId = await createDriveFolder(
       this.state.accessToken,
       this.state.vin + "_" + this.state.userName
@@ -171,6 +170,14 @@ export default class CameraExample extends React.Component {
         position: "top",
         type: "warning"
       });
+      let data = [
+        new Date(),
+        "Picture upload fail",
+        this.state.userName,
+        JSON.stringify(uploadResponse)
+      ];
+      appendToSheet(this.state.accessToken, "ERRORS", data);
+
       // Toast.show("This is a toast fail.");
     }
   }
@@ -221,14 +228,14 @@ export default class CameraExample extends React.Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: this.state.vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: this.state.vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS

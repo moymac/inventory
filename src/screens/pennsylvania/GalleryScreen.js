@@ -17,7 +17,6 @@ export default class GalleryScreen extends React.Component {
   };
 
   componentDidMount() {
-    console.log(this.props.vin);
     FileSystem.readDirectoryAsync(
       FileSystem.cacheDirectory + "photos" + this.props.vin
     ).then(photos => {
@@ -59,6 +58,7 @@ export default class GalleryScreen extends React.Component {
     const { vin } = this.props;
     return (
       <View style={styles.container}>
+        <Text>{vin}</Text>
         <ScrollView contentComponentStyle={{ flex: 1 }}>
           <View style={styles.pictures}>
             {this.state.photos.map((photoUri, index) => (

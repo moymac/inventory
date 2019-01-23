@@ -51,7 +51,6 @@ export default class OneUser extends Component {
     username = helperArray[0];
     usermail = helperArray[1];
     helperArray = helperArray.slice(2);
-    console.log(titleArray, helperArray);
     this.setState({ permissionList: helperArray });
   }
   static navigationOptions = {
@@ -59,7 +58,6 @@ export default class OneUser extends Component {
   };
 
   buttonClick = async () => {
-    console.log("row", row, "permissionList", this.state.permissionList);
     let wasUpdated = await updateUserPermissions(this.state.accessToken, row, [
       this.state.permissionList
     ]);

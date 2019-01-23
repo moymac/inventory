@@ -10,25 +10,64 @@ import {
   Form,
   Text,
   Icon,
-  Button
+  Button,
+  Picker
 } from "native-base";
 import { appendToSheet, updateSheet } from "../../Calls";
+import { getAdesaLocationName } from "../../utils";
+
+const locationOptions = [
+  { label: "Lane C", value: "LaneC" },
+  { label: "Employee Parking lot", value: "Employee Parking Lot" },
+  { label: "Shut A", value: "Shut A" },
+  { label: "Customer Parking Lot", value: "Customer Parking Lot" },
+  { label: "Inside", value: "Inside" },
+  { label: "Back 40 Row1", value: "Back 40 Row1" },
+  { label: "Back 40 Row2", value: "Back 40 Row2" },
+  { label: "Back 40 Row3", value: "Back 40 Row3" },
+  { label: "Back 40 Row4", value: "Back 40 Row4" },
+  { label: "Back 40 Row5", value: "Back 40 Row5" },
+  { label: "Back 40 Row6", value: "Back 40 Row6" },
+  { label: "Back 40 Row7", value: "Back 40 Row7" },
+  { label: "Back 40 Row8", value: "Back 40 Row8" },
+  { label: "Back 40 Row9", value: "Back 40 Row9" },
+  { label: "Back 40 Row10", value: "Back 40 Row10" },
+
+  { label: "Unknown/Annex", value: "Unknown Annex" }
+];
+
 export default class LocationUpdate extends Component {
-  state = {
-    comment: "",
-    vin: "",
-    location: "",
-    accessToken: ""
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      comment: "",
+      vin: "",
+      location: "",
+      accessToken: ""
+    };
+  }
+
   componentWillMount() {
     const { params } = this.props.navigation.state;
     vin = params.scannedValue;
-    this.state.vin = params.scannedValue;
-    this.state.userName = params.userName;
-    this.state.location = params.address;
-    this.state.latitude = params.latitude;
-    this.state.longitude = params.longitude;
-    this.state.accessToken = params.accessToken;
+    // this.state.vin = params.scannedValue;
+    // this.state.userName = params.userName;
+    // this.state.location = params.address;
+    // this.state.latitude = params.latitude;
+    // this.state.longitude = params.longitude;
+    // this.state.accessToken = params.accessToken;
+    let adesaname = getAdesaLocationName(params.latitude, params.longitude);
+
+    this.setState({
+      vin: params.scannedValue,
+      userName: params.userName,
+      location: params.address,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      accessToken: params.accessToken,
+      comment: adesaname
+    });
   }
 
   buttonClick = () => {
@@ -62,14 +101,14 @@ export default class LocationUpdate extends Component {
         {
           text: "Scan other vehicle",
           onPress: () => this.props.navigation.navigate("BarcodeScanner")
-        },
-        {
-          text: "Get vehicle data",
-          onPress: () =>
-            this.props.navigation.navigate("VehicleInfo", {
-              scannedValue: vin
-            })
         }
+        // {
+        //   text: "Get vehicle data",
+        //   onPress: () =>
+        //     this.props.navigation.navigate("VehicleInfo", {
+        //       scannedValue: vin
+        //     })
+        // }
       ],
       { cancelable: true }
     ); ///UPDATE TO GOOGLE SHEETS
@@ -83,8 +122,6 @@ export default class LocationUpdate extends Component {
     )
   });
   render() {
-    const { params } = this.props.navigation.state;
-
     return (
       <Container>
         <Content>
@@ -101,12 +138,33 @@ export default class LocationUpdate extends Component {
                 value={this.state.location}
               />
             </Item>
-
+            {/*    <Item picker>
+              <Picker
+                mode="dropdown"
+                iosIcon={<Icon name="ios-arrow-down-outline" />}
+                placeholder="Adesa location"
+                placeholderStyle={{ color: "#bfc6ea" }}
+                placeholderIconColor="#007aff"
+                selectedValue={this.state.adesaLocation}
+                onValueChange={adesaLocation =>
+                  this.setState({ adesaLocation })
+                }
+              >
+                {locationOptions.map((option, i) => (
+                  <Picker.Item
+                    key={i}
+                    label={option.label}
+                    value={option.value}
+                  />
+                ))}
+              </Picker>
+            </Item>   */}
             <Item stackedLabel last>
               <Label>Comment</Label>
 
               <Input
                 onChangeText={comment => this.setState({ comment })}
+                value={this.state.comment}
                 multiline={true}
                 numberOfLines={10}
                 style={{ height: 100 }}

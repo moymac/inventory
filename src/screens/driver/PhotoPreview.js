@@ -35,7 +35,7 @@ export default class PhotoPreview extends React.Component {
   };
   getImageDimensions = ({ width, height }) => {
     if (width > height) {
-      const scaledHeight = pictureSize * height / width;
+      const scaledHeight = (pictureSize * height) / width;
       return {
         width: pictureSize,
         height: scaledHeight,
@@ -47,7 +47,7 @@ export default class PhotoPreview extends React.Component {
         offsetY: (pictureSize - scaledHeight) / 2
       };
     } else {
-      const scaledWidth = pictureSize * width / height;
+      const scaledWidth = (pictureSize * width) / height;
       return {
         width: scaledWidth,
         height: pictureSize,
@@ -64,8 +64,7 @@ export default class PhotoPreview extends React.Component {
   render() {
     const { picture } = this.props;
     const { vin } = this.props;
-    console.log(vin);
-    console.log("picturetopreview", picture);
+
     return (
       <Container>
         <View style={styles.container}>

@@ -8,7 +8,6 @@ import React, { Component } from "react";
 import {
   Alert,
   AppRegistry,
-  Platform,
   PermissionsAndroid,
   AsyncStorage,
   CameraRoll,
@@ -19,20 +18,19 @@ import {
   Text,
   Title,
   Container,
-  Header,
   Content,
   Footer,
   FooterTab,
   Button,
   Spinner
 } from "native-base";
-import { Camera, Permissions, FileSystem } from "expo";
-import { getUserPermissions } from "../Calls";
+import { FileSystem } from "expo";
+import { getUserPermissions, getAllShipping } from "../Calls";
 
 export default class WelcomeScreen extends Component {
   async componentWillMount() {
     Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
-
+    // getAllShipping();
     await Expo.Font.loadAsync({
       Roboto: require("native-base/Fonts/Roboto.ttf"),
       Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
@@ -52,7 +50,8 @@ export default class WelcomeScreen extends Component {
     //this.requestLocationPermission();
     this.requestExpoCameraPermission();
     this.requestCameraRollPermission();
-    //    this.requestReadStoragePermission();
+    // this.requestReadStoragePermission();
+    // this.requestWriteStoragePermission();
     //this.signInWithGoogleAsync();
   }
   async requestExpoLocationPermission() {
@@ -62,8 +61,6 @@ export default class WelcomeScreen extends Component {
       alert(
         "Hey! You might want to enable location for my app, they are good."
       );
-    } else {
-      console.log("I have expoloc permissions");
     }
   }
   async requestLocationPermission() {
@@ -91,8 +88,6 @@ export default class WelcomeScreen extends Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     if (status !== "granted") {
       alert("Hey! You might want to enable CAMERA for my app, they are good.");
-    } else {
-      console.log("I have expocam permissions");
     }
   }
 
@@ -107,35 +102,14 @@ export default class WelcomeScreen extends Component {
           message: "InventoryApp needs access to your camera"
         }
       );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("You can use the camera");
-      } else {
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
         console.log("Camera permission denied");
       }
     } catch (err) {
       console.warn(err);
     }
   }
-  async requestReadStoragePermission() {
-    console.log("You ask to use the camera");
 
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        {
-          title: "InventoryApp Storage Permission",
-          message: "InventoryApp needs read storage"
-        }
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("You can read now");
-      } else {
-        console.log("storage read permission denied");
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  }
   async requestCameraRollPermission() {
     const { Permissions } = Expo;
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -143,14 +117,11 @@ export default class WelcomeScreen extends Component {
       alert(
         "Hey! You might want to enable camera access for my app, they are good."
       );
-    } else {
-      console.log("I have permissions");
     }
   }
 
-  componentDidMount() {
-    this._loadInitialState().done();
-    //  Alert.alert('null', userNameValue);
+  async componentDidMount() {
+    await this._loadInitialState().done();
   }
 
   _loadInitialState = async () => {
@@ -158,20 +129,21 @@ export default class WelcomeScreen extends Component {
       var userNameValue = await AsyncStorage.getItem("userName");
 
       //  var userTypeValue = await AsyncStorage.getItem("userType");
-      if (userNameValue !== null) {
-        let userPermissions = await getUserPermissions(
-          JSON.parse(userNameValue)
-        );
-        AsyncStorage.setItem(
-          "userPermissions",
-          JSON.stringify(userPermissions)
-        );
+      if (userNameValue) {
+        let usrnameval = await JSON.parse(userNameValue);
 
-        global.userPermissions = userPermissions;
+        let userPermissions = await getUserPermissions(usrnameval);
+        if (userPermissions) {
+          AsyncStorage.setItem(
+            "userPermissions",
+            JSON.stringify(userPermissions)
+          );
+        }
 
-        this.setState({ username: userNameValue });
-        this.setState({ loaded: true });
-        if (userPermissions[2] == "1") {
+        this.setState({ username: userNameValue, loaded: true });
+        // console.log("userPermissions", userPermissions);
+
+        if (userPermissions && userPermissions[2] == "1") {
           this.timeoutHandle = setTimeout(() => {
             this.props.navigation.navigate("BarcodeScanner", {
               username: this.state.username,
